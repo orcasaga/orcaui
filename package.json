@@ -1,7 +1,7 @@
 {
   "name": "orcaui",
   "version": "1.0.0",
-  "author": "ORCAUI Development Team ",
+  "author": "ORCAUI Development Team",
   "license": "MIT",
   "description": "null",
   "main": "./src/scripts/orca.js",
