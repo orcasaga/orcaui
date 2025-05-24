@@ -1,6 +1,6 @@
 {
   "name": "orcaui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "ORCAUI Development Team",
   "license": "MIT",
   "description": "null",
@@ -52,12 +52,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/orcasaga/orcaui"
+    "url": "https://github.com/orcasaga/orcaui.git"
   },
   "extraRepositories": [
     {
       "type": "git",
-      "url": "https://gitee.com/orcasaga/orcaui"
+      "url": "git@gitee.com:orcasaga/orcaui.git"
     }
   ],
   "keywords": [
