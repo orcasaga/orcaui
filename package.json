@@ -1,9 +1,9 @@
 {
   "name": "orcaui",
   "version": "1.0.1",
-  "author": "ORCAUI Development Team",
+  "author": "OrcaUI Development Team",
   "license": "MIT",
-  "description": "null",
+  "description": "OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.",
   "main": "./src/scripts/orca.js",
   "types": "./types/orca.d.ts",
   "type": "module",
@@ -72,7 +72,7 @@
   "bugs": {
     "url": "https://github.com/orcasaga/orcaui/issues"
   },
-  "homepage": "https://www.orcaui.cn",
+  "homepage": "https://www.orcaui.com",
   "dependencies": {
     "simple-git": "^3.27.0"
   }

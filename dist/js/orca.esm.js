@@ -1,9 +1,18 @@
 
 /*!
- * @since Last modified: 2025-5-24 15:52:17
- * @name ORCAUI front-end framework.
- * @version 1.0.0
- */
+ * @since Last modified: 2025-5-24 23:38:17
+ * @name OrcaUI front-end framework.
+ * @version 1.0.1
+ * @author OrcaUI development team <orcasaga@outlook.com>
+ * @description OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.
+ * @see {@link https://www.orcaui.com|Official website}
+ * @see {@link https://github.com/orcasaga/orcaui/issues|github issues}
+ * @see {@link https://gitee.com/orcasaga/orcaui/issues|Gitee issues}
+ * @see {@link https://www.npmjs.com/package/orcaui|NPM}
+ * @issue Discord Group https://discord.gg/ffwSrF5D
+ * @copyright This software supports the MIT License, allowing free learning and commercial use, but please retain the terms 'OrcaUI' & 'ORCAUI' within the software.
+ * @license MIT license
+*/
 
 const isNull = (data) => [undefined, null, 'undefined', 'null'].includes(data);
 
@@ -33029,9 +33038,7 @@ class Router extends ModBaseListen {
         this.routes = this.options.routes || [];
         this.current = this.options.current;
         this.stateEvt = (evt) => {
-            if (!evt.state) {
-                console.log('回到了初始页面，或者改变了哈希');
-            }
+            if (!evt.state) ;
             else {
                 if (this.current !== evt.state.path) {
                     let toRoute = this.getRoute(evt.state.path), fromRoute = this.getRoute();
@@ -33434,9 +33441,8 @@ class CompBaseCommFieldMixin extends CompBaseCommField {
         this.filterModsOpts(opts);
     }
     completedEvt(data) {
-        console.log(123);
         let intArr = getIntArr([this.canListenkeys, data.keys.set]);
-        console.log(intArr, this.modsOpts['module'], 10);
+        (this.modsOpts['module']);
         intArr.length && this.ins.update(this.modsOpts['module']);
     }
 }
