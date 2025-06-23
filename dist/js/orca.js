@@ -1,8 +1,8 @@
 
 /*!
- * @since Last modified: 2025-5-24 23:38:17
+ * @since Last modified: 2025-6-23 23:46:45
  * @name OrcaUI front-end framework.
- * @version 1.0.1
+ * @version 1.0.2
  * @author OrcaUI development team <orcasaga@outlook.com>
  * @description OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.
  * @see {@link https://www.orcaui.com|Official website}
@@ -676,10 +676,9 @@
         warn: {
             init: 'The initialization process of the instance has been stopped. You will need to manually initialize it using the init() method later!',
             emptyCont: 'Data was not obtained, but execution was not halted!',
-        },
-        error: {
             parse: 'Getting data from HTML resulted in an error, an empty array was returned, but execution was not interrupted!',
         },
+        error: {},
         message: {},
         valid: {
             regChars: '~!@#$%^&*',
@@ -1258,7 +1257,7 @@
                 params = dft.data;
             }
             else if (dataType === 'Object') {
-                if (dft.contType?.includes('json')) {
+                if (dft.contType?.includes('json') || dft.headers['Content-Type']?.includes('json')) {
                     params = JSON.stringify(dft.data);
                 }
                 else {
@@ -1368,21 +1367,34 @@
                     let resp = Object.assign({ status: xhr.status }, dftResp);
                     if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
                         if (!dft.respType || xhr.responseType === 'text') {
-                            let div = createEl('div', '', xhr.responseText), content = '', reg = /(<head\b[^<]*(?:(?!<\/head>)<[^<]*)*<\/head>)|(<\/?html.*?>)|(<\!DOCTYPE.*?html.*?>)|(<\/?body.*?>)/gi, strEnd = sliceStrEnd({ str: dft.url }), childSel = (typeof dft.data === 'string' ? dft.data : strEnd), childDom = getEl(childSel, div);
-                            if (childDom) {
-                                content = childDom.innerHTML;
+                            let trim = xhr.responseText.trim(), content = '';
+                            if ((trim.startsWith('[') && trim.endsWith(']')) || (trim.startsWith('{') && trim.endsWith('}'))) {
+                                try {
+                                    content = JSON.parse(trim);
+                                }
+                                catch {
+                                    console.warn('Failed to parse JSON data. Defaulting to default string.');
+                                    content = xhr.responseText;
+                                }
                             }
-                            else if (!isEmpty(childSel) && !childDom) {
-                                console.warn(`The node of "${childSel}" is not exist!`);
-                                content = xhr.responseText.replace(reg, '').trim();
-                            }
-                            else {
-                                if (xhr.responseText.trim().startsWith('{') || xhr.responseText.trim().startsWith('[')) {
-                                    content = JSON.parse(xhr.responseText.trim());
+                            else if (trim.endsWith('</html>')) {
+                                let reg = /(<head\b[^<]*(?:(?!<\/head>)<[^<]*)*<\/head>)|(<\/?html.*?>)|(<\!DOCTYPE.*?html.*?>)|(<\/?body.*?>)/gi, strEnd = sliceStrEnd({ str: dft.url }), childSel = (typeof dft.data === 'string' ? dft.data : strEnd);
+                                if (childSel) {
+                                    let div = createEl('div', '', trim), childDom = getEl(childSel, div);
+                                    if (childDom) {
+                                        content = childDom.innerHTML;
+                                    }
+                                    else {
+                                        console.warn(`Target node "${childSel}" does not exist, returning full HTML content instead.`);
+                                        content = trim.replace(reg, '').trim();
+                                    }
                                 }
                                 else {
-                                    content = xhr.responseText.replace(reg, '').trim();
+                                    content = trim.replace(reg, '').trim();
                                 }
+                            }
+                            else {
+                                content = xhr.responseText;
                             }
                             resp.content = content;
                         }
@@ -6338,6 +6350,8 @@
         return result;
     };
 
+    const attrValBool = (value) => ![null, 'false', '0', false, 0, undefined].includes(value);
+
     const treeTools = {
         
         find: function (arr, val, key) {
@@ -6350,7 +6364,10 @@
             return null;
         },
         getBoolItems: (data, prop, negative = false) => {
-            return data.filter((k) => negative ? !k[prop] : k[prop]);
+            return data.filter((k) => {
+                let tmp = attrValBool(k[prop]);
+                return negative ? !tmp : tmp;
+            });
         },
         
         toFlat: function (data) {
@@ -6609,7 +6626,7 @@
                         content: node.textContent,
                         type: 'array',
                         error: (err) => {
-                            console.error(config.error.parse, err);
+                            console.info(config.warn.parse);
                         }
                     }));
                 }
@@ -6661,7 +6678,7 @@
                                         content: resp,
                                         type,
                                         error: (err) => {
-                                            console.error(config.error.parse, err);
+                                            console.info(config.warn.parse);
                                         }
                                     })));
                                 }
@@ -6924,8 +6941,6 @@
             this.set(themeRaw);
         }
     };
-
-    const attrValBool = (value) => ![null, 'false', '0', false, 0, undefined].includes(value);
 
     const getBetweenEls = ({ selector, start, end, root, exclude }) => {
         let rootEl = getEl(root) || document.body, startEl = getEl(start, rootEl), endEl = getEl(end, rootEl), excEls = getEls(exclude, rootEl), els = getEls(selector, rootEl), result = [];
@@ -9975,6 +9990,7 @@
             this.wings = getEls(this.options.wing.selector);
             this.renderBubble('dialog');
             this.setAttrs();
+            this.fixAni(this.options.placement);
             await getContent.call(this, {
                 content: this.options.content,
                 contType: this.options.contType,
@@ -9991,7 +10007,6 @@
                     this.renderContent(data);
                 }
             });
-            this.fixAni(this.options.placement);
             this.lastPlace = '';
             this.handleFooter();
             this.handleTools();
@@ -10255,11 +10270,11 @@
         }
     }
 
-    const confirm = ({ content, contType, contData, tplStr, tplEng, heading, yes, no }) => {
+    const confirm = ({ content, contType, contData, tplStr, tplEng, heading, yes, no, dialog = {} }) => {
         if (isEmpty(content))
             return;
         return new Promise((resolve) => {
-            new Dialog(null, {
+            new Dialog(null, deepMerge({
                 content,
                 contType,
                 contData,
@@ -10275,7 +10290,7 @@
                     no && no();
                     resolve(false);
                 }
-            }).show();
+            }, dialog)).show();
         });
     };
 
@@ -10455,7 +10470,7 @@
         initCheckeds() {
             if (!this.options.check.enable)
                 return;
-            let vals = valToArr(this.options.check.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => k.checked);
+            let vals = valToArr(this.options.check.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => attrValBool(k.checked));
             for (let k of items)
                 k.checked = false;
             this.check([...items, ...vals]);
@@ -10467,19 +10482,19 @@
             this.disable(valToArr(this.options.disable));
         }
         getReadonlys() {
-            return (this.flatData || this.treeData).filter((k) => k.readonly);
+            return (this.flatData || this.treeData).filter((k) => attrValBool(k.readonly));
         }
         getDisableds() {
-            return (this.flatData || this.treeData).filter((k) => k.disabled);
+            return (this.flatData || this.treeData).filter((k) => attrValBool(k.disabled));
         }
         getExpandeds() {
-            return (this.flatData || this.treeData).filter((k) => k.expanded);
+            return (this.flatData || this.treeData).filter((k) => attrValBool(k.expanded));
         }
         getCheckeds() {
-            return (this.flatData || this.treeData).filter((k) => k.checked);
+            return (this.flatData || this.treeData).filter((k) => attrValBool(k.checked));
         }
         getUncheckeds() {
-            return (this.flatData || this.treeData).filter((k) => !k.checked);
+            return (this.flatData || this.treeData).filter((k) => !attrValBool(k.checked));
         }
         getArrowEl(item) {
             if (!this.options.arrow.enable)
@@ -10488,8 +10503,8 @@
             this.updateArrowEl(item);
         }
         toggleArrow(val, item) {
-            let map = val ? { new: 'show', old: 'hide', action: 'add' } : { new: 'hide', old: 'show', action: 'remove' };
-            item.headEl.toggleAttribute('expanded', val);
+            let tmp = attrValBool(val), map = tmp ? { new: 'show', old: 'hide', action: 'add' } : { new: 'hide', old: 'show', action: 'remove' };
+            item.headEl.toggleAttribute('expanded', tmp);
             if (this.options.arrow.type === 'image') {
                 item.arrowEl.style.backgroundImage = `url("${this.options.arrow[map.new]}")`;
             }
@@ -10534,7 +10549,7 @@
             if (this.destroyed)
                 return;
             for (let k of this.flatData) {
-                k.children && !k.expanded && this.eachExpand(k);
+                !attrValBool(k.expanded) && this.eachExpand(k);
             }
             this.listen({ name: 'expandedAll', cb });
             return this;
@@ -10594,7 +10609,7 @@
         enable(data, cb) {
             if (this.destroyed)
                 return;
-            let tmp = isNull(data) ? this.flatData : (Array.isArray(data) ? data : [data]), items = tmp.map((k) => findItem(k, this.flatData)).filter((k) => k && (k.disabled || k.readonly));
+            let tmp = isNull(data) ? this.flatData : (Array.isArray(data) ? data : [data]), items = tmp.map((k) => findItem(k, this.flatData)).filter((k) => k && (attrValBool(k.disabled) || attrValBool(k.readonly)));
             for (let k of items) {
                 k.hasOwnProperty('disabled') && (k.disabled = false);
                 k.hasOwnProperty('readonly') && (k.readonly = false);
@@ -10610,7 +10625,7 @@
             return this;
         }
         toggleCheck(item) {
-            item.checked ? this.check(item, false) : this.check(item, true);
+            attrValBool(item.checked) ? this.check(item, false) : this.check(item, true);
         }
         uncheckAll(cb) {
             if (this.destroyed || !this.options.check.enable)
@@ -11889,6 +11904,7 @@
             this.wings = getEls(this.options.wing.selector);
             this.renderBubble('popup');
             this.setAttrs();
+            this.fixAni(this.options.placement);
             await getContent.call(this, {
                 content: this.options.content,
                 contType: this.options.contType,
@@ -11905,7 +11921,6 @@
                     this.renderContent(data);
                 }
             });
-            this.fixAni(this.options.placement);
             this.createPosition();
             this.handleFooter();
             this.handleTools();
@@ -11921,6 +11936,21 @@
         fixAni(placement) {
             this.aniIn = placement.includes('max') && this.options.in === 'slideDown' ? 'fadeIn' : this.options.in;
             this.aniOut = placement.includes('max') && this.options.out === 'slideUp' ? 'fadeOut' : this.options.out;
+            this.fixEaseAni(placement);
+        }
+        fixEaseAni(placement) {
+            if (this.aniIn === 'easeIn') {
+                this.aniIn = placement.includes('left') ? 'easeInStart' :
+                    placement.includes('right') ? 'easeInEnd' :
+                        placement.includes('top') ? 'easeInTop' :
+                            placement.includes('bottom') ? 'easeInBtm' : 'easeIn';
+            }
+            if (this.aniOut === 'easeOut') {
+                this.aniOut = placement.includes('left') ? 'easeOutStart' :
+                    placement.includes('right') ? 'easeOutEnd' :
+                        placement.includes('top') ? 'easeOutTop' :
+                            placement.includes('bottom') ? 'easeOutBtm' : 'easeOut';
+            }
         }
         handleTools() {
             if (this.options.tools.enable) {
@@ -15651,7 +15681,7 @@
         receiver;
         hoverIns;
         contXhr;
-        floorMax;
+        floorMorca;
         chainChecking;
         seqItems;
         maxIndex;
@@ -15691,7 +15721,7 @@
                 let item = findItem(this, _this.flatData, 'labelEl');
                 _this.toggleSelected(item);
                 if (item && item.toolsEl && _this.options.tools.trigger === 'click') {
-                    if (item.selected) {
+                    if (attrValBool(item.selected)) {
                         show({ el: item.toolsEl });
                     }
                     else {
@@ -15756,7 +15786,7 @@
             this.correctOpts();
             super.useTpl();
             this.searchs = [];
-            this.floorMax = 0;
+            this.floorMorca = 0;
             this.chainChecking = false;
             this.seqItems = [];
             this.setFeature();
@@ -15967,22 +15997,23 @@
                     }
                     else if (obj.key === 'atEnd') ;
                     else if (obj.key === 'expanded' && obj.proxy.children) {
-                        obj.proxy.arrowEl && super.toggleArrow(obj.value, obj.proxy);
+                        obj.proxy.arrowEl && super.toggleArrow(attrValBool(obj.value), obj.proxy);
                         this.toggleParentLegend(obj.proxy);
                     }
                     else if (obj.key === 'selected') {
-                        obj.proxy.headEl.toggleAttribute('selected', obj.value);
+                        obj.proxy.headEl.toggleAttribute('selected', attrValBool(obj.value));
                         this.updateSeqItems(obj, 'selected');
                     }
                     else if (obj.key === 'disabled') {
-                        obj.proxy.headEl.toggleAttribute('disabled', obj.value);
+                        obj.proxy.headEl.toggleAttribute('disabled', attrValBool(obj.value));
                     }
                     else if (obj.key === 'readonly') {
-                        obj.proxy.headEl.toggleAttribute('readonly', obj.value);
+                        obj.proxy.headEl.toggleAttribute('readonly', attrValBool(obj.value));
                     }
                     else if (obj.key === 'checked') {
-                        obj.proxy.headEl.toggleAttribute('checked', obj.value);
-                        obj.proxy.checkEl && obj.proxy.checkEl.setAttribute('check', obj.value ? 'ed' : '');
+                        let tmp = attrValBool(obj.value);
+                        obj.proxy.headEl.toggleAttribute('checked', tmp);
+                        obj.proxy.checkEl && obj.proxy.checkEl.setAttribute('check', tmp ? 'ed' : '');
                         this.updateSeqItems(obj, 'checked');
                     }
                     else if (obj.key === 'children') {
@@ -16007,7 +16038,7 @@
                     if (this.options.check.enable && this.options.check.max) {
                         let checkeds = super.getCheckeds(), uncheckeds = super.getUncheckeds(), setDisabled = (data) => {
                             for (let k of data) {
-                                !k.disabled && k.checkEl.toggleAttribute('disabled', true);
+                                !attrValBool(k.disabled) && k.checkEl.toggleAttribute('disabled', true);
                                 k.headEl.toggleAttribute('exceeded', true);
                             }
                         };
@@ -16051,7 +16082,7 @@
             }
         }
         initExpandeds() {
-            let vals = valToArr(this.options.expand.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => k.expanded && k.children), tmp = [...items, ...vals];
+            let vals = valToArr(this.options.expand.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => attrValBool(k.expanded) && k.children), tmp = [...items, ...vals];
             for (let k of items)
                 k.expanded = false;
             if (this.options.expand.all) {
@@ -16080,13 +16111,13 @@
         initSelecteds() {
             if (!this.options.select.enable)
                 return;
-            let vals = valToArr(this.options.select.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => k.selected), tmp = [...items, ...vals];
+            let vals = valToArr(this.options.select.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => attrValBool(k.selected)), tmp = [...items, ...vals];
             for (let k of items)
                 k.selected = false;
             this.select(this.options.select.only ? tmp[0] : tmp);
         }
         getSelecteds() {
-            return this.flatData.filter((k) => k.selected);
+            return this.flatData.filter((k) => attrValBool(k.selected));
         }
         getParentsGroupBy(items, key = 'pId') {
             if (isEmpty(items))
@@ -16203,7 +16234,7 @@
         toggleParentLegend(item) {
             if (!this.options.legend.enable || item.legend || !Array.isArray(this.options.legend.parent) || !this.options.legend.parent[1])
                 return;
-            this.setLegendVal(item.legendEl, this.options.legend.parent[item.expanded ? 1 : 0], this.options.legend.type);
+            this.setLegendVal(item.legendEl, this.options.legend.parent[attrValBool(item.expanded) ? 1 : 0], this.options.legend.type);
         }
         updateLegendEl(item) {
             if (!this.options.legend.enable)
@@ -16213,7 +16244,7 @@
             }
             else {
                 if (item.hasOwnProperty('children')) {
-                    this.setLegendVal(item.legendEl, this.options.legend.parent[item.expanded ? 1 : 0], this.options.legend.type);
+                    this.setLegendVal(item.legendEl, this.options.legend.parent[attrValBool(item.expanded) ? 1 : 0], this.options.legend.type);
                 }
                 else {
                     this.setLegendVal(item.legendEl, this.options.legend.child, this.options.legend.type);
@@ -16270,11 +16301,11 @@
             if (!item.customEl) {
                 item.customEl = item.custom ? createEl('div', { [orca.alias]: 'custom' }, item.custom) : null;
             }
-            item.expanded && item.headEl.toggleAttribute('expanded', true);
-            item.selected && item.headEl.toggleAttribute('selected', true);
-            item.disabled && item.headEl.toggleAttribute('disabled', true);
-            item.readonly && item.headEl.toggleAttribute('readonly', true);
-            item.checked && item.headEl.toggleAttribute('checked', true);
+            attrValBool(item.expanded) && item.headEl.toggleAttribute('expanded', true);
+            attrValBool(item.selected) && item.headEl.toggleAttribute('selected', true);
+            attrValBool(item.disabled) && item.headEl.toggleAttribute('disabled', true);
+            attrValBool(item.readonly) && item.headEl.toggleAttribute('readonly', true);
+            attrValBool(item.checked) && item.headEl.toggleAttribute('checked', true);
             this.options.drag.enable && item.headEl.toggleAttribute([this.dropTag], true);
             if (this.options.check.enable) {
                 item.checkType = this.getCheckType(parent);
@@ -16452,7 +16483,7 @@
             this.options.select.enable ? this.targetEl.setAttribute('select', this.options.select.span) : this.targetEl.removeAttribute('select');
         }
         setDragDrop(item) {
-            if (!this.options.drag.enable || item.disabled || this.excludeDrags.includes(item))
+            if (!this.options.drag.enable || attrValBool(item.disabled) || this.excludeDrags.includes(item))
                 return;
             item.dragIns = new Drag(item.wrapEl, extend({
                 target: {
@@ -16526,30 +16557,31 @@
             k.labelEl.removeEventListener('click', this.selectEvt);
             k.labelEl.addEventListener('click', this.selectEvt, false);
             if (k.toolsEl) {
+                let tmp = attrValBool(k.readonly);
                 if (k.removeEl) {
                     k.removeEl.onclick = () => {
-                        if (k.readonly)
+                        if (tmp)
                             return;
                         this.remove(k);
                     };
                 }
                 if (k.editEl) {
                     k.editEl.onclick = () => {
-                        if (k.readonly)
+                        if (tmp)
                             return;
                         this.inputLabel(k);
                     };
                 }
                 if (k.addfileEl) {
                     k.addfileEl.onclick = () => {
-                        if (k.readonly)
+                        if (tmp)
                             return;
                         this.add({ target: k, isChild: true, expand: true });
                     };
                 }
                 if (k.addfolderEl) {
                     k.addfolderEl.onclick = () => {
-                        if (k.readonly)
+                        if (tmp)
                             return;
                         this.add({ target: k, isChild: true, isLeaf: false, expand: true });
                     };
@@ -16564,11 +16596,12 @@
                 k.headEl.removeEventListener('click', this.lineEvt);
                 k.headEl.addEventListener('click', this.lineEvt, false);
             }
-            k.disabled && k.headEl.toggleAttribute('disabled', true);
-            k.readonly && k.headEl.toggleAttribute('readonly', true);
+            attrValBool(k.disabled) && k.headEl.toggleAttribute('disabled', true);
+            attrValBool(k.readonly) && k.headEl.toggleAttribute('readonly', true);
             if (this.options.check.enable) {
                 k.checkEl.on('check', async (val) => {
-                    !this.chainChecking && val.checked !== k.checked && await this.check(k, val.checked);
+                    let tmp = attrValBool(val.checked);
+                    !this.chainChecking && tmp !== attrValBool(k.checked) && await this.check(k, tmp);
                 });
             }
             if (this.options.drag.enable) {
@@ -16604,18 +16637,18 @@
             }
         }
         getDrops() {
-            return isEmpty(this.options.drag.drops) ? this.flatData.map((k) => !k.disabled ? k.headEl : null).filter(Boolean) :
-                this.options.drag.value.map((k) => findItem(k, this.flatData)).filter((k) => k && !k.disabled).map((k) => k.headEl);
+            return isEmpty(this.options.drag.drops) ? this.flatData.map((k) => !attrValBool(k.disabled) ? k.headEl : null).filter(Boolean) :
+                this.options.drag.value.map((k) => findItem(k, this.flatData)).filter((k) => k && !attrValBool(k.disabled)).map((k) => k.headEl);
         }
         getReadonly() {
-            return this.flatData.find((k) => k.readonly);
+            return this.flatData.find((k) => attrValBool(k.readonly));
         }
         getTriggerEl(item) {
             return (item.href && item.arrowEl ? item.arrowEl : item.headEl);
         }
         addTrigger(item, target) {
             if (item.children) {
-                if (!item.disabled) {
+                if (!attrValBool(item.disabled)) {
                     let triggerEl = target || this.getTriggerEl(item);
                     if (this.options.arrow.trigger === 'click') {
                         triggerEl.removeEventListener('click', this.expandEvt);
@@ -16636,7 +16669,7 @@
                 }
             }
             else {
-                if (!item.disabled) {
+                if (!attrValBool(item.disabled)) {
                     item.headEl.removeEventListener('click', this.selectEvt);
                     item.headEl.addEventListener('click', this.selectEvt, false);
                 }
@@ -16644,7 +16677,7 @@
         }
         removeTrigger(item, target) {
             if (item.children) {
-                if (!item.disabled) {
+                if (!attrValBool(item.disabled)) {
                     let triggerEl = target || this.getTriggerEl(item);
                     if (this.options.arrow.trigger === 'click') {
                         triggerEl.removeEventListener('click', this.expandEvt);
@@ -16655,7 +16688,7 @@
                 }
             }
             else {
-                if (!item.disabled) {
+                if (!attrValBool(item.disabled)) {
                     item.headEl.removeEventListener('click', this.selectEvt);
                 }
             }
@@ -16666,19 +16699,20 @@
             let item = findItem(data, this.flatData);
             if (!item || !item.children)
                 return;
-            item.expanded ? super.collapse(item) : super.expand(item);
+            attrValBool(item.expanded) ? super.collapse(item) : super.expand(item);
             super.listen({ name: 'trigger', params: [item] });
         }
         toggleSelected(data) {
             let item = findItem(data, this.flatData);
             if (!item || item.headEl.hasAttribute('editing') || !this.options.select.enable)
                 return;
-            if (item.selected) {
+            let tmp = attrValBool(item.selected);
+            if (tmp) {
                 this.deselect(item);
             }
             else {
                 this.select(item);
-                this.options.select.only && this.deselect(this.flatData.filter((k) => k !== item && k.selected));
+                this.options.select.only && this.deselect(this.flatData.filter((k) => k !== item && tmp));
             }
         }
         async eachCollapse(data, cb) {
@@ -16745,7 +16779,7 @@
                 }
             });
             if (this.options.expand.only) {
-                let others = this.flatData.filter((k) => (k !== item && k.expanded && k.floor === item.floor && k.children));
+                let others = this.flatData.filter((k) => (k !== item && attrValBool(k.expanded) && k.floor === item.floor && k.children));
                 for (let k of others)
                     super.collapse(k);
             }
@@ -16753,9 +16787,9 @@
         floatDown(obj) {
             if (!obj.hasOwnProperty('children') || !Array.isArray(obj.children))
                 return;
-            let enables = obj.children.filter((k) => !k.disabled), type = this.getCheckType(obj);
+            let enables = obj.children.filter((k) => !attrValBool(k.disabled)), type = this.getCheckType(obj);
             for (let k of enables) {
-                if (obj.checked) {
+                if (attrValBool(obj.checked)) {
                     type === 'checkbox' && (k.checked = true);
                 }
                 else {
@@ -16769,11 +16803,11 @@
                 return;
             let parents = treeTools.getParentsFromPath({ path: obj.path, flatData: this.flatData, pathHyphen: this.options.pathHyphen, pop: true }).parents.reverse(), setCheck = (item, enables, type) => {
                 if (type === 'checkbox') {
-                    if (enables.every((k) => !k.checked)) {
+                    if (enables.every((k) => !attrValBool(k.checked))) {
                         item.checked = false;
                         item.checkEl.setAttribute('check', '');
                     }
-                    else if (enables.every((k) => k.checked)) {
+                    else if (enables.every((k) => attrValBool(k.checked))) {
                         item.checked = true;
                         item.checkType === 'radio' && this.uncheckSibings(item);
                     }
@@ -16783,7 +16817,7 @@
                     }
                 }
                 else if (type === 'radio') {
-                    if (enables.some((k) => k.checked)) {
+                    if (enables.some((k) => attrValBool(k.checked))) {
                         item.checked = true;
                         item.checkType === 'radio' && this.uncheckSibings(item);
                     }
@@ -16794,7 +16828,7 @@
                 }
             };
             for (let i of parents) {
-                let enables = i.children.filter((k) => !k.disabled), type = this.getCheckType(i);
+                let enables = i.children.filter((k) => !attrValBool(k.disabled)), type = this.getCheckType(i);
                 setCheck(i, enables, type);
             }
         }
@@ -16809,7 +16843,7 @@
         }
         uncheckSibings(item) {
             this.chainChecking = true;
-            let siblings = super.getSiblings(item).filter((k) => k.checked);
+            let siblings = super.getSiblings(item).filter((k) => attrValBool(k.checked));
             for (let k of siblings) {
                 k.checked = false;
                 this.options.check.linkage && this.floatDown(k);
@@ -16834,8 +16868,8 @@
         select(data, flag = true, cb) {
             if (this.destroyed || !this.options.select.enable || isNull(data))
                 return;
-            let tmp = findItems(data, this.flatData), items = tmp.map((k) => findItem(k, this.flatData)).filter((k) => !k.selected === flag && (this.options.select.span === 'leaf' ? !k.children : this.options.select.span === 'branch' ? k.children : true)), param = items, fn = (obj) => {
-                if (obj.headEl.hasAttribute('editing') || obj.headEl.hasAttribute('unselectable') || obj.selected)
+            let tmp = findItems(data, this.flatData), items = tmp.map((k) => findItem(k, this.flatData)).filter((k) => !attrValBool(k.selected) === flag && (this.options.select.span === 'leaf' ? !k.children : this.options.select.span === 'branch' ? k.children : true)), param = items, fn = (obj) => {
+                if (obj.headEl.hasAttribute('editing') || obj.headEl.hasAttribute('unselectable') || attrValBool(obj.selected))
                     return;
                 obj.selected = true;
             };
@@ -16846,7 +16880,7 @@
                     let item = items[0];
                     if (item) {
                         fn(item);
-                        this.deselect(this.flatData.filter((k) => k !== item && k.selected));
+                        this.deselect(this.flatData.filter((k) => k !== item && attrValBool(k.selected)));
                     }
                     param = [item];
                 }
@@ -16881,7 +16915,7 @@
             if (isNull(data))
                 return;
             let items = Array.isArray(data) ? data : [data], fn = (obj) => {
-                if (!obj.selected)
+                if (!attrValBool(obj.selected))
                     return;
                 obj.selected = false;
             };
@@ -16903,7 +16937,7 @@
         async check(data, flag = true, cb) {
             if (this.destroyed)
                 return;
-            let filters = findItems(data, this.flatData), items = filters.filter((k) => !k.checked === flag && (flag ? (this.options.check.span === 'leaf' ? !k.children : this.options.check.span === 'branch' ? !!k.children : true) : true)), fn = (obj) => {
+            let filters = findItems(data, this.flatData), items = filters.filter((k) => !attrValBool(k.checked) === flag && (flag ? (this.options.check.span === 'leaf' ? !k.children : this.options.check.span === 'branch' ? !!k.children : true) : true)), fn = (obj) => {
                 obj.checked = flag;
                 flag && obj.checkType === 'radio' && this.uncheckSibings(obj);
                 this.options.check.linkage && this.eachCheck(obj);
@@ -17900,7 +17934,7 @@
             return this;
         }
         initActive() {
-            let activeItem = this.treeData.findIndex((k) => k.selected);
+            let activeItem = this.treeData.findIndex((k) => attrValBool(k.selected));
             if (this.options.active === 0 || this.options.active) {
                 this.activate(this.options.active);
             }
@@ -17982,7 +18016,7 @@
                         obj.target.badgeEl.setAttribute('label', obj.value);
                     }
                     else if (obj.key === 'selected') {
-                        if (obj.value === true) {
+                        if (attrValBool(obj.value)) {
                             obj.target.headEl.setAttribute('selected', '');
                             obj.target.bodyEl.setAttribute('selected', '');
                             !obj.target.bodyEl.innerHTML && this.fillContent(obj.target);
@@ -17993,7 +18027,7 @@
                         }
                     }
                     else if (obj.key === 'disabled') {
-                        obj.target.headEl.toggleAttribute('disabled', obj.value);
+                        obj.target.headEl.toggleAttribute('disabled', attrValBool(obj.value));
                     }
                     else if (obj.key === 'content') {
                         this.fillContent(obj.target);
@@ -18055,21 +18089,21 @@
                 obj.cube = obj.cubeEl ? obj.cubeEl.src : '';
                 obj.diskEl = elem.querySelector(`[${orca.alias}="disk"]`);
                 obj.disk = obj.diskEl ? obj.diskEl.src : '';
-                obj.badgeEl = elem.querySelector(`[${orca.alias}="badge"],oc-badge`);
+                obj.badgeEl = elem.querySelector(`[${orca.alias}="badge"],ax-badge`);
                 obj.badge = obj.badgeEl ? obj.badgeEl.getAttribute('label') || obj.badgeEl.textContent.trim() : '';
                 setBoolean(obj, ['selected', 'disabled']);
                 return obj;
             };
             data = headsArr.map((k, i) => {
                 let tmp = getPropsFromHead(k), bodyEl = bodiesArr[i];
-                bodyEl.toggleAttribute('selected', !!tmp.selected);
+                bodyEl.toggleAttribute('selected', attrValBool(tmp.selected));
                 this.options.tools.enable && this.getTools(tmp);
                 return { ...tmp, bodyEl, content: bodyEl.innerHTML };
             });
             return data;
         }
         renderData(data) {
-            this.dividerEl = createEl('oc-br');
+            this.dividerEl = createEl('ax-br');
             this.options.divider.size && this.dividerEl.setAttribute('size', this.options.divider.size);
             this.headsEl = createEl('ul', { class: `${orca.prefix}tab-head` });
             this.bodiesEl = createEl('ul', { class: `${orca.prefix}tab-body` });
@@ -18095,10 +18129,10 @@
             item.imageEl = item.image ? createEl('img', { [orca.alias]: 'image', src: item.image }) : null;
             item.headEl = createEl('li');
             item.bodyEl = createEl('li');
-            item.badgeEl = item.badge ? createEl('oc-badge', { [orca.alias]: 'badge' }, item?.badge?.trim()) : null;
+            item.badgeEl = item.badge ? createEl('ax-badge', { [orca.alias]: 'badge' }, item?.badge?.trim()) : null;
             item.tipsEl = item.tips ? createEl('i', { [orca.alias]: 'tips' }, item.tips) : null;
-            item.selected && (item.headEl.toggleAttribute('selected', true), item.bodyEl.toggleAttribute('selected', true));
-            item.disabled && item.headEl.toggleAttribute('disabled', true);
+            attrValBool(item.selected) && (item.headEl.toggleAttribute('selected', true), item.bodyEl.toggleAttribute('selected', true));
+            attrValBool(item.disabled) && item.headEl.toggleAttribute('disabled', true);
             item.headEl.append(...[item.iconEl, item.diskEl, item.cubeEl, item.imageEl, item.labelEl, item.tipsEl, item.badgeEl].filter(Boolean));
             this.options.tools.enable && this.getTools(item);
         }
@@ -18173,6 +18207,7 @@
         }
         updateEvt(k) {
             this.addTrigger(k);
+            let tmp = attrValBool(k.disabled);
             if (k.toolsEl) {
                 if (k.closeEl) {
                     k.closeEl.onclick = () => {
@@ -18187,14 +18222,14 @@
                 }
                 if (k.addEl) {
                     k.addEl.onclick = debounce(() => {
-                        if (k.disabled)
+                        if (tmp)
                             return;
                         this.add({ data: {}, isFront: false, target: k });
                     });
                 }
                 if (k.updateEl) {
                     k.updateEl.onclick = debounce(() => {
-                        if (k.disabled)
+                        if (tmp)
                             return;
                         this.updateItemCont({ content: k.content, target: k });
                     });
@@ -18205,7 +18240,7 @@
                     tool.action && tool.action.call(refer, tool);
                 }
             }
-            k.disabled && k.headEl.toggleAttribute('disabled', true);
+            tmp && k.headEl.toggleAttribute('disabled', true);
             k.action && k.action.call(this, k);
         }
         renderFinish() {
@@ -18215,16 +18250,16 @@
             }
         }
         getSelected() {
-            return this.treeData.find((k) => k.selected);
+            return this.treeData.find((k) => attrValBool(k.selected));
         }
         addTrigger(item) {
-            if (!item.disabled) {
+            if (!attrValBool(item.disabled)) {
                 item.headEl.removeEventListener(this.trigger, this.actEvt);
                 item.headEl.addEventListener(this.trigger, this.actEvt, false);
             }
         }
         removeTrigger(item) {
-            if (item.disabled) {
+            if (attrValBool(item.disabled)) {
                 item.headEl.removeEventListener(this.trigger, this.actEvt);
             }
         }
@@ -18275,10 +18310,10 @@
         async activate(data, cb) {
             if (this.destroyed || isNull(data))
                 return;
-            let item = findItem(data, this.treeData), other = this.treeData.find((k) => k !== item && k.selected);
+            let item = findItem(data, this.treeData), other = this.treeData.find((k) => k !== item && attrValBool(k.selected));
             if (!item)
                 return;
-            if (item.selected) {
+            if (attrValBool(item.selected)) {
                 !item.bodyEl.innerHTML && this.fillContent(item);
             }
             else {
@@ -18404,10 +18439,10 @@
                         item[k] = val.call({ ins: this, item: k }, item);
                     }
                     else if (['icon', 'disk', 'cube', 'image', 'label', 'tips', 'badge', 'disabled', 'content', 'contType', 'contData', 'ajaxType'].includes(k)) {
-                        item[k] = val;
+                        item[k] = k === 'disabled' ? attrValBool(val) : val;
                     }
                     else if (k === 'selected') {
-                        val === true ? this.activate(item) : item[k] = val;
+                        attrValBool(val) ? this.activate(item) : item[k] = val;
                     }
                 }
                 catch (err) {
@@ -28554,17 +28589,18 @@
                         obj.proxy.labelEl.target = obj.value;
                     }
                     else if (obj.key === 'expanded') {
-                        super.toggleArrow(obj.value, obj.proxy);
+                        super.toggleArrow(attrValBool(obj.value), obj.proxy);
                     }
                     else if (obj.key === 'disabled') {
-                        obj.proxy.wrapEl.toggleAttribute('disabled', obj.value);
+                        obj.proxy.wrapEl.toggleAttribute('disabled', attrValBool(obj.value));
                     }
                     else if (obj.key === 'readonly') {
-                        obj.proxy.headEl.toggleAttribute('readonly', obj.value);
+                        obj.proxy.headEl.toggleAttribute('readonly', attrValBool(obj.value));
                     }
                     else if (obj.key === 'checked') {
-                        obj.proxy.headEl.toggleAttribute('checked', obj.value);
-                        obj.proxy.checkEl.setAttribute('check', obj.value ? 'ed' : '');
+                        let tmp = attrValBool(obj.value);
+                        obj.proxy.headEl.toggleAttribute('checked', tmp);
+                        obj.proxy.checkEl.setAttribute('check', tmp ? 'ed' : '');
                     }
                     else if (obj.key === 'children') {
                         if (!obj.raw && obj.value) ;
@@ -28593,7 +28629,7 @@
             return this.observeIns;
         }
         initExpandeds() {
-            let vals = valToArr(this.options.expand.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => k.expanded), tmp = [...items, ...vals];
+            let vals = valToArr(this.options.expand.value).map((k) => findItem(k, this.flatData)).filter(Boolean), items = this.flatData.filter((k) => attrValBool(k.expanded)), tmp = [...items, ...vals];
             for (let k of items)
                 k.expanded = false;
             if (this.options.expand.all) {
@@ -28668,10 +28704,10 @@
             if (!item.customEl) {
                 item.customEl = item.custom ? createEl('div', { [orca.alias]: 'custom' }, item.custom) : null;
             }
-            item.expanded && item.headEl.toggleAttribute('expanded', true);
-            item.disabled && item.headEl.toggleAttribute('disabled', true);
-            item.readonly && item.headEl.toggleAttribute('readonly', true);
-            item.checked && item.headEl.toggleAttribute('checked', true);
+            attrValBool(item.expanded) && item.headEl.toggleAttribute('expanded', true);
+            attrValBool(item.disabled) && item.headEl.toggleAttribute('disabled', true);
+            attrValBool(item.readonly) && item.headEl.toggleAttribute('readonly', true);
+            attrValBool(item.checked) && item.headEl.toggleAttribute('checked', true);
             if (this.options.check.enable) {
                 item.checkEl = createEl(`oc-${this.options.check.type}`, { [orca.alias]: 'check' });
             }
@@ -28755,21 +28791,21 @@
             if (k.toolsEl) {
                 if (k.removeEl) {
                     k.removeEl.onclick = () => {
-                        if (k.readonly)
+                        if (attrValBool(k.readonly))
                             return;
                         this.remove(k);
                     };
                 }
                 if (k.editEl) {
                     k.editEl.onclick = () => {
-                        if (k.readonly)
+                        if (attrValBool(k.readonly))
                             return;
                         this.inputLabelCont(k);
                     };
                 }
                 if (k.addEl) {
                     k.addEl.onclick = () => {
-                        if (k.readonly)
+                        if (attrValBool(k.readonly))
                             return;
                         this.add({ target: k });
                     };
@@ -28784,11 +28820,12 @@
                 k.headEl.removeEventListener('click', this.lineEvt);
                 k.headEl.addEventListener('click', this.lineEvt, false);
             }
-            k.disabled && k.headEl.toggleAttribute('disabled', true);
-            k.readonly && k.headEl.toggleAttribute('readonly', true);
+            attrValBool(k.disabled) && k.headEl.toggleAttribute('disabled', true);
+            attrValBool(k.readonly) && k.headEl.toggleAttribute('readonly', true);
             if (this.options.check.enable) {
                 k.checkEl.on('check', (val) => {
-                    !this.chainChecking && val.checked !== k.checked && this.check(k, val.checked);
+                    let tmp = attrValBool(val.checked);
+                    !this.chainChecking && tmp !== k.checked && this.check(k, tmp);
                 });
             }
             if (this.options.drag.enable) ;
@@ -28803,7 +28840,7 @@
             return (item.href && item.arrowEl ? item.arrowEl : item.headEl);
         }
         addTrigger(item, target) {
-            if (item.disabled)
+            if (attrValBool(item.disabled))
                 return;
             let triggerEl = target || this.getTriggerEl(item);
             if (this.options.arrow.trigger === 'click') {
@@ -28824,7 +28861,7 @@
             }
         }
         removeTrigger(item, target) {
-            if (item.disabled)
+            if (attrValBool(item.disabled))
                 return;
             let triggerEl = target || this.getTriggerEl(item);
             if (this.options.arrow.trigger === 'click') {
@@ -28840,7 +28877,7 @@
             let item = findItem(data, this.flatData);
             if (!item)
                 return;
-            item.expanded ? super.collapse(item) : super.expand(item);
+            attrValBool(item.expanded) ? super.collapse(item) : super.expand(item);
             super.listen({ name: 'trigger', params: [item] });
         }
         async setContExtra(item, force = false) {
@@ -28932,14 +28969,14 @@
                 }
             });
             if (this.options.expand.only) {
-                let others = this.flatData.filter((k) => k !== item && k.expanded);
+                let others = this.flatData.filter((k) => k !== item && attrValBool(k.expanded));
                 for (let k of others)
                     super.collapse(k);
             }
         }
         uncheckSibings(item) {
             this.chainChecking = true;
-            let siblings = super.getSiblings(item).filter((k) => k.checked);
+            let siblings = super.getSiblings(item).filter((k) => attrValBool(k.checked));
             for (let k of siblings)
                 k.checked = false;
             this.chainChecking = false;
@@ -28947,7 +28984,7 @@
         check(data, flag = true, cb) {
             if (this.destroyed)
                 return;
-            let tmp = Array.isArray(data) ? data : [data], filters = tmp.map((k) => findItem(k, this.flatData)), items = filters.filter((k) => k && !k.checked === flag), fn = (obj) => {
+            let tmp = Array.isArray(data) ? data : [data], filters = tmp.map((k) => findItem(k, this.flatData)), items = filters.filter((k) => k && !attrValBool(k.checked) === flag), fn = (obj) => {
                 obj.checked = flag;
                 flag && this.options.check.type === 'radio' && this.uncheckSibings(obj);
             };
@@ -28965,7 +29002,7 @@
                 this.check(this.flatData, true);
             }
             else {
-                let checkedItem = this.flatData.find((k) => k.checked);
+                let checkedItem = this.flatData.find((k) => attrValBool(k.checked));
                 !checkedItem && this.check(this.flatData[0], true);
             }
             super.listen({ name: 'checkedAll', cb });
@@ -33376,6 +33413,9 @@
             this.listen({ name: 'check', params: [{ value: opt.newVal, checked: this.checked }] });
             oldChecked !== this.checked && this.listen({ name: 'changed', params: [{ newVal: this.checked, oldVal: !this.checked }] });
         }
+        changedAttrs(opt) {
+            opt.newVal && (this.inputEl || this.ins?.inputEl) && setAttrs(this.inputEl, strToJson(opt.newVal));
+        }
     }
 
     class CompBaseCommFieldMixin extends CompBaseCommField {
@@ -33448,8 +33488,85 @@
         }
         completedEvt(data) {
             let intArr = getIntArr([this.canListenkeys, data.keys.set]);
-            (this.modsOpts['module']);
             intArr.length && this.ins.update(this.modsOpts['module']);
+        }
+    }
+
+    class PostElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class CommentElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class BulletElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class CardElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class CrumbElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class FilterElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class FooterElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class HeaderElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class GradeElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class SpinElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class WallElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class EllipsisElem extends HTMLElement {
+        constructor() {
+            super();
+        }
+    }
+
+    class FieldElem extends HTMLElement {
+        constructor() {
+            super();
         }
     }
 
@@ -33628,7 +33745,7 @@
                 this.setAttribute('check', val);
             };
         }
-        static custAttrs = ['size', 'value', 'name', 'type', 'check', ...this.evtsArr];
+        static custAttrs = ['size', 'value', 'name', 'type', 'check', 'attrs', ...this.evtsArr];
         static boolAttrs = ['disabled'];
         static get observedAttributes() {
             return ['label', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
@@ -33670,6 +33787,7 @@
             value: this.changedSingleValue,
             label: this.changedSingleLabel,
             check: this.changedSingleCheck,
+            attrs: this.changedAttrs,
         };
     }
 
@@ -33691,7 +33809,7 @@
                 this.setAttribute('check', val);
             };
         }
-        static custAttrs = ['size', 'value', 'type', 'name', 'check', ...this.evtsArr];
+        static custAttrs = ['size', 'value', 'type', 'name', 'check', 'attrs', ...this.evtsArr];
         static boolAttrs = ['disabled'];
         static get observedAttributes() {
             return ['label', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
@@ -33736,6 +33854,7 @@
             label: this.changedSingleLabel,
             check: this.changedSingleCheck,
             lang: this.changedLang,
+            attrs: this.changedAttrs,
         };
         changedLang(opt) {
             if (this.propsProxy.type !== 'switch')
@@ -34527,12 +34646,10 @@
             this.fillWrap(this.propsProxy);
             this.increase = (step = 1, cb) => {
                 let value = parseInt(this.properties.value) + step, tips = this.getAttribute('tips');
-                this.canListen = false;
                 this.setAttribute('value', String(value));
                 tips && this.setAttribute('tips', tips);
                 this.toggleAttribute('increased', true);
                 cb && cb.call(this, value);
-                this.canListen = true;
             };
         }
         static custAttrs = ['icon', 'label', 'tips', ...this.baseAttrs];
@@ -34819,7 +34936,7 @@
             };
             this.zeroEvt = new Event('change');
         }
-        static custAttrs = ['name', 'value', 'accept', 'size', 'label', 'show', 'tools', ...this.evtsArr];
+        static custAttrs = ['name', 'value', 'accept', 'size', 'label', 'show', 'tools', 'attrs', ...this.evtsArr];
         static boolAttrs = ['disabled', 'readonly', 'multiple', 'full'];
         static get observedAttributes() {
             return ['placeholder', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
@@ -34896,6 +35013,7 @@
             placeholder: this.changedHolder,
             label: this.changedLabel,
             show: this.changedShow,
+            attrs: this.changedAttrs,
         };
         changedBool(opt) {
             this.inputEl[opt.name === 'readonly' ? 'readOnly' : opt.name] = this.propsProxy[opt.name];
@@ -34999,7 +35117,7 @@
                 (tmp !== this.inputEl.value) && this.listen({ name: 'changed', params: [data] });
             }, false);
         }
-        static custAttrs = ['name', 'placeholder', 'type', 'size', 'limit', 'tools', 'icon', 'cube', 'disk', 'image', 'btn', 'action', 'label', 'unit', 'custom', 'mean', 'task', ...this.evtsArr];
+        static custAttrs = ['name', 'placeholder', 'type', 'size', 'limit', 'tools', 'icon', 'cube', 'disk', 'image', 'btn', 'action', 'label', 'unit', 'custom', 'mean', 'task', 'attrs', ...this.evtsArr];
         static boolAttrs = ['disabled', 'readonly', 'blocked', 'full'];
         static get observedAttributes() {
             return ['value', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
@@ -35079,6 +35197,7 @@
             mean: this.changedMean,
             limit: this.changedLimit,
             tools: this.changedTools,
+            attrs: this.changedAttrs,
         };
         changedBool(opt) {
             if (opt.name === 'blocked') {
@@ -35245,7 +35364,7 @@
                 (tmp !== this.inputEl.value) && this.listen({ name: 'changed', params: [data] });
             }, false);
         }
-        static custAttrs = ['name', 'placeholder', 'size', 'tools', 'limit', 'label', 'mean', 'task', ...this.evtsArr];
+        static custAttrs = ['name', 'placeholder', 'size', 'tools', 'limit', 'label', 'mean', 'task', 'attrs', ...this.evtsArr];
         static boolAttrs = ['disabled', 'readonly', 'single', 'full'];
         static get observedAttributes() {
             return ['value', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
@@ -35309,6 +35428,7 @@
             mean: this.changedMean,
             single: this.changedSingle,
             task: this.changedTask,
+            attrs: this.changedAttrs,
         };
         changedBool(opt) {
             this.inputEl[opt.name === 'readonly' ? 'readOnly' : opt.name] = this.propsProxy[opt.name];
@@ -35790,7 +35910,7 @@
                 }
             });
         }
-        static custAttrs = ['name', 'placeholder', 'layout', 'size', 'max', 'min', 'step', 'label', 'on-exceeded', ...this.evtsArr];
+        static custAttrs = ['name', 'placeholder', 'layout', 'size', 'max', 'min', 'step', 'label', 'attrs', 'on-exceeded', ...this.evtsArr];
         static boolAttrs = ['tips', 'disabled', 'readonly', 'full'];
         static get observedAttributes() {
             return ['value', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
@@ -35798,38 +35918,7 @@
         attributeChangedCallback(name, oldVal, newVal) {
             if (!this.canListen)
                 return;
-            this.saveProps(name, newVal, NumberElem);
-            if (NumberElem.boolAttrs.includes(name)) {
-                this.inputEl[name === 'readonly' ? 'readOnly' : name] = this.propsProxy[name];
-                this[name === 'readonly' ? 'readOnly' : name] = this.propsProxy[name];
-                if (name === 'tips') {
-                    if (this.propsProxy.tips) {
-                        elState(this.tipsEl).isVirtual && this.appendChild(this.tipsEl);
-                    }
-                    else {
-                        this.tipsEl.remove();
-                    }
-                }
-            }
-            else if (['value', 'max', 'min', 'step'].includes(name)) {
-                this.inputEl[name] = newVal;
-                this.value = newVal;
-                (name === 'max' || name === 'min') && this.updateTips();
-            }
-            else if (['name', 'placeholder'].includes(name)) {
-                this.inputEl.setAttribute(name, newVal);
-                name === 'name' && (this.name = newVal);
-            }
-            else if (name === 'label') {
-                if (newVal) {
-                    this.labelEl.innerHTML = newVal;
-                    elState(this.labelEl).isVirtual && this.wrapEl.insertAdjacentElement('afterbegin', this.labelEl);
-                    this.setAttribute('layout', 'embed');
-                }
-                else {
-                    this.labelEl.remove();
-                }
-            }
+            this.savePropsToListen(name, oldVal, newVal, NumberElem);
             if (oldVal !== newVal) {
                 this.listen({ name: 'changed', params: [{ oldVal, newVal }] });
             }
@@ -35923,6 +36012,51 @@
                 this.listen({ name: 'input', params: [this.inputEl.value] });
             }, false);
         }
+        changedMaps = {
+            disabled: this.changedBool,
+            readonly: this.changedBool,
+            blocked: this.changedBool,
+            tips: this.changedBool,
+            name: this.changedName,
+            placeholder: this.changedName,
+            value: this.changedValue,
+            min: this.changedValue,
+            max: this.changedValue,
+            step: this.changedValue,
+            label: this.changedLabel,
+            attrs: this.changedAttrs,
+        };
+        changedBool(opt) {
+            this.inputEl[opt.name === 'readonly' ? 'readOnly' : opt.name] = this.propsProxy[opt.name];
+            this[opt.name === 'readonly' ? 'readOnly' : opt.name] = this.propsProxy[opt.name];
+            if (opt.name === 'tips') {
+                if (this.propsProxy.tips) {
+                    elState(this.tipsEl).isVirtual && this.appendChild(this.tipsEl);
+                }
+                else {
+                    this.tipsEl.remove();
+                }
+            }
+        }
+        changedValue(opt) {
+            this.inputEl[opt.name] = opt.newVal;
+            this.value = opt.newVal;
+            (opt.name === 'max' || opt.name === 'min') && this.updateTips();
+        }
+        changedName(opt) {
+            this.inputEl.setAttribute(opt.name, opt.newVal);
+            opt.name === 'name' && (this.name = opt.newVal);
+        }
+        changedLabel(opt) {
+            if (opt.newVal) {
+                this.labelEl.innerHTML = opt.newVal;
+                elState(this.labelEl).isVirtual && this.wrapEl.insertAdjacentElement('afterbegin', this.labelEl);
+                this.setAttribute('layout', 'embed');
+            }
+            else {
+                this.labelEl.remove();
+            }
+        }
     }
 
     class RangeElem extends CompBaseCommFieldMixin {
@@ -35931,7 +36065,7 @@
             super();
             this.type = 'range-comp';
         }
-        static custAttrs = ['name', 'step', 'max', 'min', 'axis', 'size', 'classes', 'separator', 'hyphen', 'fence', 'button', 'ruler', 'result'];
+        static custAttrs = ['name', 'step', 'max', 'min', 'axis', 'size', 'classes', 'separator', 'hyphen', 'fence', 'button', 'ruler', 'result', 'lang'];
         static boolAttrs = ['async', 'disabled', 'full', 'limit-show', 'tip-show', 'multiple', 'locked', 'rtl'];
         
         attributeChangedCallback(name, oldVal, newVal) {
@@ -36528,7 +36662,7 @@
             { tag: 'oc-checkbox', comp: CheckboxElem }
         ];
         static custAttrs = ['name', 'value', 'size', 'format', 'classes', 'mode', 'feature', 'display', 'placeholder', 'label', 'tools',
-            'moc-selection', 'min-date', 'moc-date', 'datespan', 'timespan', 'rows', 'cols', 'week-start', 'separator', 'btn-sel', 'pos-sel', 'input-sel', 'child-sel', 'lunar', 'events', 'menu', 'bubble', 'footer'];
+            'moc-selection', 'min-date', 'moc-date', 'datespan', 'timespan', 'rows', 'cols', 'week-start', 'separator', 'btn-sel', 'pos-sel', 'input-sel', 'child-sel', 'lunar', 'events', 'menu', 'bubble', 'footer', 'attrs', 'lang',];
         static boolAttrs = ['async', 'disabled', 'to-drawer', 'full', 'multiline', 'now-hide', 'now-show', 'clear-show', 'close-show', 'cancel-show', 'confirm-hide', 'auto-fill', 'manual', 'auto-correct', 'required', 'fill-now', 'rtl'];
         attributeChangedCallback(name, oldVal, newVal) {
             if (!this.canListen)
@@ -36585,6 +36719,7 @@
             size: this.changedSize,
             name: this.changedName,
             value: this.changedValue,
+            attrs: this.changedAttrs,
         };
         changedDisabled(opt) {
             this.disabled = this.propsProxy[opt.name];
@@ -36733,7 +36868,7 @@
             this.type = 'editor-comp';
             this.select = () => this.ins.inputEl.select();
         }
-        static custAttrs = ['name', 'value', 'delay', 'classes', 'content', 'cont-type',
+        static custAttrs = ['name', 'value', 'delay', 'classes', 'content', 'lang', 'cont-type',
             'cont-data', 'ajax', 'appear', 'header', 'mode', 'min-height', 'moc-height', 'feature'];
         static boolAttrs = ['async', 'disabled', 'readonly', 'deferred'];
         attributeChangedCallback(name, oldVal, newVal) {
@@ -36838,7 +36973,7 @@
             super();
             this.type = 'select-comp';
         }
-        static custAttrs = ['name', 'value', 'field', 'type', 'exclude', 'min', 'max', 'span', 'content', 'cont-type', 'cont-Data', 'ajax', 'size', 'moc-height', 'search', 'tools', 'popup'];
+        static custAttrs = ['name', 'value', 'field', 'type', 'exclude', 'min', 'max', 'span', 'content', 'cont-type', 'cont-Data', 'ajax', 'size', 'moc-height', 'search', 'tools', 'popup', 'lang', 'attrs'];
         static boolAttrs = ['async', 'manual', 'disabled', 'readonly', 'full', 'multiple', 'sliced', 'removable', 'unique', 'collapse', 'status', 'auto-width'];
         attributeChangedCallback(name, oldVal, newVal) {
             if (!this.canListen)
@@ -36892,6 +37027,7 @@
             disabled: this.changedDisabled,
             name: this.changedName,
             value: this.changedValue,
+            attrs: this.changedAttrs,
         };
         changedName(opt) {
             let tmp = opt.newVal || '';
@@ -36921,7 +37057,7 @@
             super();
             this.type = 'upload-comp';
         }
-        static custAttrs = ['name', 'value', 'url', 'content', 'cont-type', 'cont-data', 'ajax', 'limit', 'accept', 'type', 'feature', 'size', 'table', 'classes', 'status', 'choose-btn', 'upload-btn', 'clear-btn', 'cloud'];
+        static custAttrs = ['name', 'value', 'url', 'content', 'cont-type', 'cont-data', 'ajax', 'limit', 'accept', 'type', 'feature', 'size', 'table', 'classes', 'status', 'choose-btn', 'upload-btn', 'clear-btn', 'cloud', 'lang', 'attrs'];
         static boolAttrs = ['async', 'disabled', 'readonly', 'multiple', 'manual', 'pastable'];
         attributeChangedCallback(name, oldVal, newVal) {
             if (!this.canListen)
@@ -36975,6 +37111,7 @@
             disabled: this.changedDisabled,
             name: this.changedName,
             value: this.changedValue,
+            attrs: this.changedAttrs,
         };
         changedName(opt) {
             let tmp = opt.newVal || '';
@@ -37445,7 +37582,7 @@
                 <svg viewBox="0 0 24 24">
                     <mask id="mask-${now}">
                         <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                        <circle cx="25" cy="13" r="6" stroke="none" class="${orca.prefix}twilight-mask" fill="dark" />
+                        <circle cy="13" r="6" stroke="none" class="${orca.prefix}twilight-mask" fill="dark" />
                     </mask>
                     <circle fill="currentColor" cx="12" cy="12" r="6" class="${orca.prefix}twilight-main" mask="url(#mask-${now})" />
                     <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="${orca.prefix}twilight-rays">
@@ -37585,7 +37722,7 @@
                         content: firstChild.textContent,
                         type: 'array',
                         error: (err) => {
-                            console.info(config.error.parse, err);
+                            console.info(config.warn.parse, err);
                         }
                     });
                 }
@@ -37614,7 +37751,7 @@
                     content,
                     type: 'array',
                     error: (err) => {
-                        console.info(config.error.parse, err);
+                        console.info(config.warn.parse, err);
                     }
                 });
             }
@@ -38143,7 +38280,7 @@
                 return nodes.map((i) => { return { module: k, node: i }; });
             });
             return modulesNodes;
-        }, activeFun = (obj) => {
+        }, activeFn = (obj) => {
             if (['Dialog', 'Drawer', 'Popup'].includes(obj.module)) {
                 higherParent(obj.module, obj.node);
             }
@@ -38184,7 +38321,7 @@
                 done: () => {
                     console.info(`Initialization finished, all tasks of orcaui are done!`);
                 },
-                run: (task) => activeFun(task),
+                run: (task) => activeFn(task),
             });
         }
         let lazySrcs = getEls('[lazy-src]', parentEl), lazyAsyncs = getEls('[lazy-async]', parentEl);
@@ -38420,6 +38557,19 @@
         CompBaseComm,
         CompBaseCommField,
         CompBaseCommFieldMixin,
+        PostElem,
+        CommentElem,
+        BulletElem,
+        CardElem,
+        CrumbElem,
+        FilterElem,
+        FooterElem,
+        HeaderElem,
+        GradeElem,
+        SpinElem,
+        WallElem,
+        EllipsisElem,
+        FieldElem,
         MoreElem,
         ResultElem,
         DeformElem,

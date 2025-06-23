@@ -1,66 +1,22 @@
 import fs from 'fs/promises';
-import less from 'less';
-import path from 'path';
+import postcss from 'postcss';
+import config from './postcss.config.js';
 import note from './script-note.js';
 
-const inputLessFile = './src/styles/orca.less';
-const outputCssFile = './dist/css/orca.css';  
+const inputPath = './src/styles/orca.css';
+const outputPath = './dist/css/orca.css';  
 
-async function resolveLessImports(filePath, baseDir = '') {
-  const fullPath = path.join(baseDir, filePath);
-  const content = await fs.readFile(fullPath, 'utf8');
 
-  const importRegex = /@import\s+['"](.+?)['"];/g;
-  let match;
-  let resolvedContent = content;
-
-  while ((match = importRegex.exec(content)) !== null) {
-    const importPath = match[1];
-    const importFullPath = path.join(path.dirname(fullPath), importPath);
-    const importedContent = await resolveLessImports(importPath, path.dirname(fullPath));
-    resolvedContent = resolvedContent.replace(match[0], importedContent);
-  }
-
-  return resolvedContent;
-}
-
-async function compileLessToCss(lessFilePath) {
+async function build() {
   try {
-    const lessContent = await resolveLessImports(lessFilePath); 
-    const result = await less.render(lessContent, {
-      paths: [path.dirname(lessFilePath)], 
-    });
-    return result.css; 
-  } catch (error) {
-    console.error('Error compiling LESS:', error);
-    process.exit(1);
-  }
-}
-
-async function ensureDir(dirPath) {
-  try {
-    await fs.mkdir(dirPath, { recursive: true });
-  } catch (error) {
-    console.error('Error creating directory:', error);
-    process.exit(1);
-  }
-}
-
-async function writeCssFile(cssContent, outputPath) {
-  try {
-    await ensureDir(path.dirname(outputPath)); 
-    const finalCssContent = note + cssContent; 
+    let css = await fs.readFile(inputPath, 'utf8');
+    const result = await postcss(config.plugins).process(css, { from: inputPath });
+    const finalCssContent = note + result.css; 
     await fs.writeFile(outputPath, finalCssContent, 'utf8');
-    console.log(`CSS file saved to: ${outputPath}`);
-  } catch (error) {
-    console.error('Error writing CSS file:', error);
-    process.exit(1);
+    console.log('✅ Success!');
+  } catch (err) {
+    console.error('❌ Error: ', err);
   }
 }
 
-async function main() {
-  const cssContent = await compileLessToCss(inputLessFile); 
-  await writeCssFile(cssContent, outputCssFile);       
-}
-
-main();
+build();

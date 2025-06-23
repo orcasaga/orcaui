@@ -1,6 +1,25 @@
+import postcss from 'rollup-plugin-postcss'
 import resolve from '@rollup/plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
 import note from './script-note.js';
+
+// Use postcss only to recognize CSS files in TypeScript without processing the CSS files
+const postcssConfig = {
+  extract: false,
+  inject: false,
+  modules: false,
+  autoModules: false,
+  use: {
+    sass: false,
+    less: false,
+    stylus: false
+  },
+  plugins: [],
+  config: false,
+  minimize: false,
+  include: /\.css$/,
+  exclude: /node_modules/
+}
 
 const sharePlugins = [
   {
@@ -15,9 +34,10 @@ const sharePlugins = [
   },
   process.env.REPLACE === 'true' && replace({
     preventAssignment: true,
-    'console.log': '', 
+    'console.log': '',
   }),
   resolve(),
+  postcss(postcssConfig),
 ].filter(Boolean);
 export default [
   {
