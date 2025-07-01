@@ -1,8 +1,8 @@
 
 /*!
- * @since Last modified: 2025-6-23 23:46:45
+ * @since Last modified: 2025-7-1 19:4:7
  * @name OrcaUI front-end framework.
- * @version 1.0.2
+ * @version 1.0.3
  * @author OrcaUI development team <orcasaga@outlook.com>
  * @description OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.
  * @see {@link https://www.orcaui.com|Official website}
@@ -131,8 +131,9 @@ const lang = {
     },
     form: {
         placeholder: 'Please enter...',
-        fileLabel: 'Choose files...',
-        fileMulti: '{{this.data}} files:',
+        fileLabel: 'Choose one file...',
+        filesLabel: 'Choose one or more files...',
+        hasFiles: '{{this.data}} files: ',
         maxLength: 'Maximum {{this.total}} characters, {{this.value}} entered, {{this.remaining}} remaining.',
         minLength: 'Minimum {{this.min}} characters, {{this.value}} entered, {{this.remaining}} more needed.',
         limitLength: 'Enter between {{this.min}} and {{this.max}} characters, currently {{this.value}}.',
@@ -165,36 +166,36 @@ const lang = {
         fail: '{{ this.label || "" }} validation failed!',
         required: '{{ this.label }} is required!',
         email: '{{ this.label }} must be a valid email address!',
-        cellphone: '{{ this.label }} must be a valid phone number!',
-        landline: '{{ this.label }} must be a valid landline number!',
+        uuid: '{{ this.label }} must be a valid UUID!',
+        card: '{{ this.label }} must be a valid credit card number!',
         ip: '{{ this.label }} must be a valid IP address!',
         id: '{{ this.label }} must be a valid ID number!',
-        zip: '{{ this.label }} must be a postal code!',
         url: '{{ this.label }} must be a valid domain name!',
-        plate: '{{ this.label }} must be a valid license plate number!',
-        locale: '{{ this.label }} must contain only Locale characters!',
+        locale: '{{ this.label }} must contain only locale characters!',
         letter: '{{ this.label }} must contain only letters!',
         string: '{{ this.label }} must contain only letters and numbers!',
-        password: '{{ this.label }} must contain letters, numbers, and special characters!',
-        ymdhms: '{{ this.label }} must be in format YYYY-MM-DD HH:mm:ss (e.g., 2022-11-13 2:56:12)!',
-        ymd: '{{ this.label }} must be in format YYYY-MM-DD (e.g., 2022-11-13)!',
-        hms: '{{ this.label }} must be in format HH:mm:ss (e.g., 2:56:12)!',
-        ym: '{{ this.label }} must be in format YYYY-MM (e.g., 2022-11)!',
+        password: '{{ this.label }} must be a password string!',
+        ymdhms: '{{ this.label }} must be in format YYYY-MM-DD HH:mm:ss (e.g., 2022-11-13 2:56:12 or 2022/11/13T2:56:12.153)!',
+        mdyhms: '{{ this.label }} must be in format MM/DD/YYYY HH:mm:ss (e.g., 05/12/2022, May 12, 2022 15:45:12, or 5/12/2022 15:45:12.153)!',
+        ymd: '{{ this.label }} must be in format YYYY-MM-DD (e.g., 2022-11-13 or 2022/11/13)!',
+        mdy: '{{ this.label }} must be in format MM/DD/YYYY (e.g., 5/12/2022 or May 12,2022)!',
+        hms: '{{ this.label }} must be in format HH:mm:ss (e.g., 2:56:12 or 2:56:12.153)!',
+        ym: '{{ this.label }} must be in format YYYY-MM (e.g., 2022-11 or 2022/11)!',
         y: '{{ this.label }} must be a 4-digit year!',
         m: '{{ this.label }} must be a month between 1-12!',
         d: '{{ this.label }} must be a day between 1-31!',
-        date: '{{ this.label }} must be a valid date!',
+        date: '{{ this.label }} must be a valid date string!',
         integer: '{{ this.label }} must be a positive integer not starting with 0!',
         number: '{{ this.label }} must be a number (positive, negative, integer, or decimal)!',
-        'date=': '{{ this.label }} must be {{ this.data }}!',
-        'date>': '{{ this.label }} must be after {{ this.data }}!',
-        'date>=': '{{ this.label }} must not be earlier than {{ this.data }}!',
-        'date<': '{{ this.label }} must not be after {{ this.data }}!',
-        'date<=': '{{ this.label }} must not be later than {{ this.data }}!',
-        'date><': '{{ this.label }} must be between {{ this.data[0] }} and {{ this.data[1] }}!',
-        'date><=': '{{ this.label }} must be after {{ this.data[0] }} and before or equal to {{ this.data[1] }}!',
-        'date>=<': '{{ this.label }} must be after or equal to {{ this.data[0] }} and before {{ this.data[1] }}!',
-        'date>=<=': '{{ this.label }} must be between {{ this.data[0] }} and {{ this.data[1] }} inclusive!',
+        'date=': '{{ this.label }} must be {{ this.data }} (timestamp)!',
+        'date>': '{{ this.label }} must be after {{ this.data }} (timestamp)!',
+        'date>=': '{{ this.label }} must not be earlier than {{ this.data }} (timestamp)!',
+        'date<': '{{ this.label }} must not be after {{ this.data }} (timestamp)!',
+        'date<=': '{{ this.label }} must not be later than {{ this.data }} (timestamp)!',
+        'date><': '{{ this.label }} must be between {{ this.data[0] }} (timestamp) and {{ this.data[1] }} (timestamp)!',
+        'date><=': '{{ this.label }} must be after {{ this.data[0] }} (timestamp) and before or equal to {{ this.data[1] }} (timestamp)!',
+        'date>=<': '{{ this.label }} must be after or equal to {{ this.data[0] }} (timestamp) and before {{ this.data[1] }} (timestamp)!',
+        'date>=<=': '{{ this.label }} must be between {{ this.data[0] }} (timestamp) and {{ this.data[1] }} (timestamp) inclusive!',
         'than=': '{{ this.label }} must equal {{ this.data }}!',
         'than>': '{{ this.label }} must be greater than {{ this.data }}!',
         'than>=': '{{ this.label }} must be greater than or equal to {{ this.data }}!',
@@ -235,7 +236,7 @@ const lang = {
         succ: 'Success',
         error: 'Error',
         issue: 'Question',
-        info: 'Info',
+        info: 'Infomation',
         confirm: 'Confirmed',
         cancel: 'Canceled',
         forbid: 'Disabled'
@@ -334,7 +335,7 @@ const lang = {
     },
     progress: {
         complete: 'Completed!',
-        tips: 'Current Progress'
+        tips: 'Current'
     },
     infinite: {
         finish: 'No more content.',
@@ -1788,7 +1789,7 @@ const classes = (target) => {
         
         has: function (classes) {
             if (!el || isEmpty(classes))
-                return this;
+                return false;
             let arr = getClasses(classes);
             for (let k of arr) {
                 if (!el.classList.contains(k)) {
@@ -4163,16 +4164,13 @@ const sliceFrags = ({ str = '', start = '{', end = '}', contain = true }) => {
 };
 
 const toLocalTime = (date) => {
-    let dateStr, localDate, flag, loacalTime;
+    let localDate, loacalTime;
     if (date) {
-        date = date.trim();
-        localDate = new Date(date);
-        flag = localDate instanceof Date && !isNaN(localDate.getTime());
-        if (!flag) {
-            throw new Error('Date format must be "YYYY-MM-DD" or "YYYY/MM/DD"!');
-        }
-        dateStr = date.replace(/-/g, "/");
-        loacalTime = new Date(dateStr).getTime();
+        date = date.trim().replace('T', ' ').replace(/-/g, "/");
+        localDate = Date.parse(date);
+        if (isNaN(localDate))
+            throw new Error('Please use a valid date format!');
+        loacalTime = localDate;
     }
     else {
         loacalTime = Date.now();
@@ -4248,28 +4246,28 @@ const validTools = {
         return strength;
     },
     
-    parseLength: (value) => {
-        let regex = '', text = '';
-        if (value) {
-            let arr = value.replace('{', '').replace('}', '').split(',').map((k) => ~~k);
+    parseLength: (rule, value = '', label = '') => {
+        let regex = '', text = '', param = { value, label };
+        if (rule) {
+            let arr = rule.replace('{', '').replace('}', '').split(',').map((k) => ~~k);
             if (arr.length === 2) {
                 regex = (arr[1] && arr[1] > arr[0]) ? `{${arr[0]},${arr[1]}}` :
                     (arr[1] && arr[1] === arr[0]) ? `{${arr[0]}}` : `{${arr[0]},}`;
                 if (arr[1]) {
                     if (arr[0] === 0) {
-                        text = renderTpl(config.lang.valid['length<='], { label: '', data: arr[1] });
+                        text = renderTpl(config.lang.valid['length<='], { ...param, data: arr[1] });
                     }
                     else {
-                        text = renderTpl(config.lang.valid['length>=<='], { label: '', data: arr });
+                        text = renderTpl(config.lang.valid['length>=<='], { ...param, data: arr });
                     }
                 }
                 else {
-                    text = renderTpl(config.lang.valid['length>='], { label: '', data: arr[0] });
+                    text = renderTpl(config.lang.valid['length>='], { ...param, data: arr[0] });
                 }
             }
             else {
                 regex = `{${arr[0]}}`;
-                text = renderTpl(config.lang.valid['length='], { label: '', data: arr[0] });
+                text = renderTpl(config.lang.valid['length='], { ...param, data: arr[0] });
             }
         }
         return { regex, text };
@@ -4297,8 +4295,8 @@ const validTools = {
                 strData[regTypes[val[0]]] = val[1] || 1;
             });
             tplData = { label: data?.label || '', name: data?.name || '', value: data?.value || '', data: strData };
-            regex += `.${this.parseLength(rangeStr).regex || '{0,}'}$`;
-            text = renderTpl(tplStr, tplData) + (rangeStr ? this.parseLength(rangeStr).text : '');
+            regex += `.${this.parseLength(rangeStr, tplData.value).regex || '{0,}'}$`;
+            text = renderTpl(tplStr, tplData) + (rangeStr ? this.parseLength(rangeStr, tplData.value).text : '');
         }
         return { regex, text };
     },
@@ -4331,8 +4329,8 @@ const validTools = {
             }
             strData.total = types;
             tplData = { label: data?.label || '', name: data?.name || '', value: data?.value || '', data: strData };
-            regex += `${this.parseLength(rangeStr).regex || '{0,}'}$`;
-            text = renderTpl(tplStr, tplData) + (rangeStr ? this.parseLength(rangeStr).text : '');
+            regex += `${this.parseLength(rangeStr, tplData.value).regex || '{0,}'}$`;
+            text = renderTpl(tplStr, tplData) + (rangeStr ? this.parseLength(rangeStr, tplData.value).text : '');
         }
         return { regex, text };
     },
@@ -4364,7 +4362,7 @@ const validTools = {
         return { passed, fails };
     },
     
-    listenSubmit: async function ({ item, fail, succ, cb }) {
+    listenSubmit: function ({ item, fail, succ, cb }) {
         let allItems = orca.valids, getItems = () => {
             let itemType = getDataType(item), result = [];
             if (isEmpty(item)) {
@@ -4388,29 +4386,34 @@ const validTools = {
                 }
             }
             return result;
-        }, usableItems = getItems().filter((k) => k?.parent?.nodeName === 'FORM'), result = { passed: true, fails: [] };
+        }, usableItems = getItems().filter((k) => k?.parent?.nodeName === 'FORM');
         if (usableItems.length > 0) {
             for (let k of usableItems) {
-                await this.validForm({
-                    el: k.parent,
-                    fail: (fails) => {
-                        fail && fail(k, fails);
-                    },
-                    succ: (fails) => {
-                        if (succ) {
-                            succ(k, fails);
+                if (k.parent?.orca?.hasSubmitListener)
+                    continue;
+                k.parent.addEventListener('submit', (e) => {
+                    preventDft(e);
+                    this.validForm({
+                        el: k.parent,
+                        fail: (fails) => {
+                            fail && fail(k, fails);
+                        },
+                        succ: (fails) => {
+                            if (succ) {
+                                succ(k, fails);
+                            }
+                            else {
+                                k.parent.submit();
+                            }
                         }
-                        else {
-                            k.parent.submit();
-                        }
-                    }
-                }).then((resp) => {
-                    result = resp;
-                    cb && cb(k, resp);
-                });
+                    }).then((resp) => {
+                        cb && cb(k, resp);
+                    });
+                }, false);
+                storeNode(k.parent).addData('hasSubmitListener', true);
             }
         }
-        return result;
+        return this;
     },
     
     factory: async (data) => {
@@ -5981,7 +5984,7 @@ const regExps = {
     
     email: /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(\.[-a-zA-Z0-9_-])+/,
     
-    ip: /^\d+\.\d+\.\d+\.\d+$/,
+    ip: /^(25[0-5]|2[0-4]\d|[01]?\d\d?)\.((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){2}(25[0-5]|2[0-4]\d|[01]?\d\d?)$/,
     
     url: /^(?=^.{3,255}$)(http(s)?:\/\/)?(www\.)?[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+(:\d+)*(\/\w+\.\w+)*$/,
     
@@ -5991,15 +5994,19 @@ const regExps = {
     
     string: /^[a-zA-Z0-9]+$/,
     
-    password: `^[a-zA-Z0-9${orca.config.valid.regChars}]+$`,
+    password: `^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[${orca.config.valid.regChars}])[a-zA-Z0-9${orca.config.valid.regChars}]{${orca.config.valid.lengthStr},}$`,
     
-    ymdhms: /^(\d{4})(-|\/)(\d{1,2})\2(\d{1,2}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/,
+    ymdhms: /^(?:\d{4}([\-\/])(0?[1-9]|1[0-2])\1(0?[1-9]|[12][0-9]|3[01])\s+|\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])T)(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?$/,
     
-    ymd: /^(\d{4})(-|\/)(\d{1,2})\2(\d{1,2})$/,
+    mdyhms: /^(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)|(?:January|February|March|April|May|June|July|August|September|October|November|December))\s+(0?[1-9]|[12][0-9]|3[01])\s*,\s*([0-9]{4})|^(0?[1-9]|1[0-2])\/(0?[1-9]|[12][0-9]|3[01])\/([0-9]{4})\s+(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?$/,
     
-    hms: /^((20|21|22|23|[0-1]\d)\:[0-5][0-9])(\:[0-5][0-9])?$/,
+    ymd: /^(\d{4})(-|\/)(0?[1-9]|1[0-2])\2((0?[1-9])|((1|2)[0-9])|30|31)$/,
     
-    ym: /^(\d{4})(-|\/)(\d{1,2})$/,
+    mdy: /^(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)|(?:January|February|March|April|May|June|July|August|September|October|November|December))\s+(0?[1-9]|[12][0-9]|3[01])\s*,\s*([0-9]{4})$|^(0?[1-9]|1[0-2])\/(0?[1-9]|[12][0-9]|3[01])\/([0-9]{4})$/,
+    
+    hms: /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?$/,
+    
+    ym: /^(\d{4})(-|\/)(0?[1-9]|1[0-2])$/,
     
     y: /^(\d{4})$/,
     
@@ -6011,20 +6018,9 @@ const regExps = {
     
     number: /^(-?\d+)\.?(\d*)$/,
     
-    cellphone: /^(\+1|1)?[\s.-]?\(?[2-9]\d{2}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/,
+    card: /^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|2(2[2-9][0-9]|[3-6][0-9]{2}|7[01][0-9]|720)[0-9]{12}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12}|(?:35[2-8][0-9])[0-9]{12}|62[0-9]{14,17})$/,
     
-    landline: /^(\+1|1)?[\s.-]?\(?[2-9]\d{2}\)?[\s.-]?[2-9]\d{2}[\s.-]?\d{4}$/,
-    
-    plate: {
-        
-        nev: /^(?:[A-Z]{2,3}[- ]?)?(?:EV|EL|HY|ZEV)[- ]?[A-Z0-9]{2,6}$|^[A-Z0-9]{2,8}[- ]?(?:EV|EL|HY|ZEV)$/,
-        
-        oil: /^[A-Z0-9]{2,8}(?:[- ]?[A-Z0-9]{2,6})?$/,
-    },
-    
-    id: /^(?!000|666)[0-8]\d{2}-(?!00)\d{2}-(?!0000)\d{4}$/,
-    
-    zip: /^(?:\d{5}(?:-\d{4})?|(?:APO|FPO|DPO) (?:AE|AP|AA) \d{4})$/,
+    uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
 };
 
 const replaceFrag = ({ origin, text, start, stop, length }) => {
@@ -12509,7 +12505,7 @@ class Valid extends ModBaseListenCache {
     hostValid;
     msgEl;
     otherBox;
-    checkFun;
+    checkFn;
     types;
     userRules;
     result;
@@ -12547,9 +12543,9 @@ class Valid extends ModBaseListenCache {
         this.createMsgEl();
         this.otherBox = getEl(this.options.placement);
         this.createObs();
-        this.checkFun = () => {
+        this.checkFn = debounce(() => {
             this.do();
-        };
+        });
         this.dftRules = {
             
             'required': (data) => {
@@ -12557,11 +12553,7 @@ class Valid extends ModBaseListenCache {
                 return !isEmpty(data.value) ? { passed: true } : { passed: false, fail, type: 'required' };
             },
             
-            ...this.loopTestRules(['email', 'cellphone', 'landline', 'ip', 'id', 'zip', 'url', 'locale', 'password', 'letter', 'string', 'ymdhms', 'ymd', 'hms', 'ym', 'y', 'm', 'd', 'integer', 'number']),
-            'plate': (data) => {
-                let regex = data.value.length === 8 ? regExps.plate.nev : regExps.plate.oil;
-                return this.testRegex({ regex, value: data.value, name: 'plate' });
-            },
+            ...this.loopTestRules(['email', 'card', 'uuid', 'ip', 'url', 'locale', 'password', 'letter', 'string', 'ymdhms', 'mdyhms', 'ymd', 'mdy', 'hms', 'ym', 'y', 'm', 'd', 'integer', 'number']),
             'date': (data) => {
                 let flag = isDateStr(data.value), fail = renderTpl(this.options.lang['date'], { label: data.label, value: data.value });
                 return flag ? { passed: true } : { passed: false, fail, type: 'date' };
@@ -12616,7 +12608,7 @@ class Valid extends ModBaseListenCache {
             },
             ...this.options.extend
         };
-        validTools.listenSubmit({ item: this.parentEl });
+        !this.parentEl?.orca?.hasSubmitListener && validTools.listenSubmit({ item: this.parentEl });
         super.listen({ name: 'constructed' });
         initial && this.init();
     }
@@ -12635,11 +12627,11 @@ class Valid extends ModBaseListenCache {
         this.types = typeof this.options.type === 'string' ? paramToJson(this.options.type) : this.options.type;
         this.getUserRules();
         if (['change', 'blur', 'input'].includes(this.options.trigger)) {
-            this.targetEl.removeEventListener(this.options.trigger, this.checkFun);
-            this.targetEl.addEventListener(this.options.trigger, this.checkFun, false);
+            this.targetEl.removeEventListener(this.options.trigger, this.checkFn);
+            this.targetEl.addEventListener(this.options.trigger, this.checkFn, false);
         }
         else if (this.options.trigger === 'load') {
-            this.do();
+            this.checkFn();
         }
         super.listen({ name: 'initiated', cb });
         return this;
@@ -12862,11 +12854,11 @@ class Valid extends ModBaseListenCache {
             }
             this.options.placement = this.options.placement.trim();
             if (this.options.placement === 'down') {
-                let box = this.targetEl.closest(`.${orca.prefix}box-input`)?.querySelector(`[${orca.alias}="input"]`);
+                let box = this.targetEl.closest(`.${orca.prefix}field`)?.querySelector(`.${orca.prefix}field-input`);
                 box ? box.insertAdjacentElement('afterEnd', this.msgEl) : null;
             }
             else if (this.options.placement === 'right') {
-                let box = this.targetEl.closest(`.${orca.prefix}box-input`)?.querySelector(`[${orca.alias}="help"]`);
+                let box = this.targetEl.closest(`.${orca.prefix}field`)?.querySelector(`.${orca.prefix}field-help`);
                 box ? box.appendChild(this.msgEl) : null;
             }
             else if (this.options.placement === 'popup') {
@@ -12877,6 +12869,7 @@ class Valid extends ModBaseListenCache {
                         keepShow: true,
                         footer: false,
                         tools: false,
+                        padding: false,
                         arrow: {
                             enable: false,
                             gap: 0,
@@ -12898,7 +12891,7 @@ class Valid extends ModBaseListenCache {
                     this.msgIns.update({
                         content: this.msgText,
                         status: msg.passed ? 'succ' : 'error',
-                    }).show();
+                    }).then(() => this.msgIns.show());
                 }
             }
             else {
@@ -12976,7 +12969,7 @@ class Valid extends ModBaseListenCache {
             return this;
         }
         if (['change', 'blur', 'input'].includes(this.options.trigger)) {
-            this.targetEl.removeEventListener(this.options.trigger, this.checkFun);
+            this.targetEl.removeEventListener(this.options.trigger, this.checkFn);
         }
         this.destroyed = true;
         super.listen({ name: 'destroyed', cb });
@@ -15291,12 +15284,15 @@ class Tags extends ModBaseListenCache {
                     };
                     super.updateCache(tmp);
                 }
-                this.output.value = this.getStrVals();
-                this.output.items = [...this.data];
-                super.listen({ name: 'output', params: [this.output] });
+                this.setOutput();
             }
         });
         this.data = this.dataObs.proxy;
+    }
+    setOutput() {
+        this.output.value = this.getStrVals();
+        this.output.items = [...this.data];
+        super.listen({ name: 'output', params: [this.output] });
     }
     async renderContent(data) {
         try {
@@ -15513,6 +15509,7 @@ class Tags extends ModBaseListenCache {
                 this.renderFinish();
                 super.updateCache({ content });
                 super.listen({ name: 'updatedCont', cb, params: [this.dataOrig] });
+                this.setOutput();
             }
         });
         return this;
@@ -21598,7 +21595,7 @@ class Progress extends ModBaseListenCache {
         }
         return result;
     }
-    async animateTo(val, opts) {
+    async animateTo(val, opts = { duration: this.options.duration }) {
         if (this.destroyed)
             return this;
         this.barEl.style.transitionDuration = null;
@@ -26409,7 +26406,6 @@ class Datetime extends ModBaseListenCache {
         this.data.year.searchEl = this.data.year.panelEl.querySelector('oc-input');
         this.data.year.inputEl = this.data.year.searchEl.inputEl;
         this.data.year.btnEl = this.data.year.searchEl.btnEl;
-        console.dir(this.data.year.searchEl);
         this.panelsEl.insertAdjacentElement('afterend', this.data.year.panelEl);
         cb && cb();
     }
@@ -31478,6 +31474,7 @@ class Upload extends ModBaseListenCache {
     files;
     value;
     validItems;
+    fileInputEvt;
     static hostType = 'node';
     static optMaps = optUpload;
     constructor(elem, options = {}, initial = true) {
@@ -31509,11 +31506,15 @@ class Upload extends ModBaseListenCache {
             'file': `${orca.prefix}icon-file-text`,
         };
         let _this = this;
-        this.fileChangeEvt = function () {
+        this.fileChangeEvt = function (e) {
+            e.stopPropagation();
             let files = [...this.files];
             _this.renderList(files);
             this.value = '';
             _this.listen({ name: 'changed', params: [files] });
+        };
+        this.fileInputEvt = function (e) {
+            e.stopPropagation();
         };
         this.chooseEvt = () => {
             let globalValid = this.globalValid();
@@ -31776,6 +31777,7 @@ class Upload extends ModBaseListenCache {
         this.uploadBtn && this.uploadBtn.addEventListener('click', this.uploadEvt, false);
         this.clearBtn && this.clearBtn.addEventListener('click', this.clearEvt, false);
         this.fileEl.addEventListener('change', this.fileChangeEvt, false);
+        this.fileEl.addEventListener('input', this.fileInputEvt, true);
         this.targetEl.addEventListener("dragleave", this.dragLeaveEvt, false);
         this.targetEl.addEventListener("dragover", this.dragOverEvt, false);
         this.targetEl.addEventListener("dragenter", this.dragEnterEvt, false);
@@ -31786,6 +31788,7 @@ class Upload extends ModBaseListenCache {
         this.uploadBtn && this.uploadBtn.removeEventListener('click', this.uploadEvt);
         this.clearBtn && this.clearBtn.removeEventListener('click', this.clearEvt);
         this.fileEl.removeEventListener('change', this.fileChangeEvt);
+        this.fileEl.removeEventListener('input', this.fileInputEvt);
         this.targetEl.removeEventListener("dragleave", this.dragLeaveEvt);
         this.targetEl.removeEventListener("dragover", this.dragOverEvt);
         this.targetEl.removeEventListener("dragenter", this.dragEnterEvt);
@@ -33352,6 +33355,7 @@ class CompBaseCommField extends CompBaseComm {
         else if (isNull(data.value) && data.label) {
             el.value = data.label;
         }
+        this.propsProxy.value = this.value = (el.value || data.value);
     }
     changedMultiDisable(opt) {
         let tmp = getAttrArr(opt.newVal);
@@ -33762,7 +33766,7 @@ class RadioElem extends CompBaseCommField {
     fillWrap(data) {
         this.wrapEl = createEl('label', { [orca.alias]: 'wrap' });
         this.inputEl = createEl('input', { type: 'radio', [orca.embedSign]: '' });
-        this.setValAttr(data, this.inputEl);
+        super.setValAttr(data, this.inputEl);
         data.name && (this.inputEl.name = data.name || '');
         this.legendEl = createEl('u');
         this.labelEl = createEl('i', '', data.label);
@@ -33921,7 +33925,7 @@ class BtnElem extends CompBaseComm {
     }
     static dependencies = [{ tag: 'oc-badge', comp: BadgeElem }];
     static custAttrs = ['type', 'theme', 'href', 'tab', 'target', 'rel', 'download', 'shape', 'size', 'width', 'check', 'icon', 'tail', 'disk', 'cube', 'image', 'tips', 'badge', 'mean', ...this.baseAttrs];
-    static boolAttrs = ['disabled', 'shaded', 'grad'];
+    static boolAttrs = ['disabled', 'selected', 'shaded', 'grad'];
     static get observedAttributes() {
         return ['label', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
     }
@@ -34041,6 +34045,7 @@ class BtnElem extends CompBaseComm {
         tail: this.changedTail,
         mean: this.changedMean,
         badge: this.changedBadge,
+        selected: this.changedSelected,
     };
     changedLabel(opt) {
         this.labelEl.innerHTML = opt.newVal || '';
@@ -34134,6 +34139,14 @@ class BtnElem extends CompBaseComm {
         }
         else {
             opt.newVal ? this.insertTips(this.propsProxy.tips) : null;
+        }
+    }
+    changedSelected(opt) {
+        if (isNull(opt.newVal)) {
+            this.propsRaw.theme ? this.setAttribute('theme', this.propsRaw.theme) : this.removeAttribute('theme');
+        }
+        else {
+            this.setAttribute('theme', 'prim');
         }
     }
 }
@@ -34363,10 +34376,15 @@ class FormatElem extends CompBaseComm {
             return text;
         }
         let chars = text.split(''), hyphen = text.includes(config.splitHyphen) ? config.splitHyphen : config.wordHyphen, rtArr = rts.split(hyphen);
-        chars = chars.map((k, i) => {
-            return `${k}<rt>${rtArr[i] || ''}</rt>`;
-        });
-        result = chars.join('');
+        if (rtArr.length === 1) {
+            result = `${text}<rt>${rtArr[0]}</rt>`;
+        }
+        else {
+            chars = chars.map((k, i) => {
+                return `${k}<rt>${rtArr[i] || ''}</rt>`;
+            });
+            result = chars.join('');
+        }
         return result;
     }
     getBrText(text, lines = 2, size) {
@@ -34554,7 +34572,7 @@ class BuoyElem extends CompBaseComm {
         this.fillWrap(this.propsProxy);
     }
     static custAttrs = ['icon', 'label', 'theme', 'size', ...this.baseAttrs];
-    static boolAttrs = ['inverted', 'arrow'];
+    static boolAttrs = ['flipped', 'arrow'];
     static get observedAttributes() {
         return ['value', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
     }
@@ -34944,9 +34962,12 @@ class FileElem extends CompBaseCommField {
             return;
         this.savePropsToListen(name, oldVal, newVal, FileElem, { tools: getAttrArr(newVal, 'close') });
     }
+    getPlaceholder(multi = false) {
+        return this.getAttribute('placeholder') || this.rawHtml || config.lang.form[`file${multi ? 's' : ''}Label`];
+    }
     getRawData() {
         this.getRawProps(FileElem);
-        this.propsRaw.placeholder = this.getAttribute('placeholder') || this.rawHtml || config.lang.form.fileLabel;
+        this.propsRaw.placeholder = this.getPlaceholder();
         this.propsRaw.value = this.propsRaw.multiple ? [] : '';
         this.getProxyProps();
         this.propsProxy['tools'] = getAttrArr(this.getAttribute('tools'), 'close');
@@ -34972,7 +34993,7 @@ class FileElem extends CompBaseCommField {
             let files = [...this.inputEl.files], names = files.map((k) => k.name), oldVal = this.value;
             this.value = this.propsProxy.multiple ? files : files[0] || '';
             files.length > 0 && (this.propsProxy.value = names.join(','));
-            this.namesEl.innerHTML = (files.length === 0) ? '' : (files.length === 1) ? this.inputEl.value : renderTpl(this.propsProxy.lang?.multi || config.lang.form.fileMulti, { data: files.length }) + this.propsProxy.value;
+            this.namesEl.innerHTML = (files.length === 0) ? '' : (files.length === 1) ? this.inputEl.value : renderTpl(this.propsProxy.lang?.hasFiles || config.lang.form.hasFiles, { data: files.length }) + this.propsProxy.value;
             if (this.mediaEl) {
                 this.mediaEl.innerHTML = '';
                 for (let k of Array.from(e.target.files))
@@ -35016,6 +35037,10 @@ class FileElem extends CompBaseCommField {
     changedBool(opt) {
         this.inputEl[opt.name === 'readonly' ? 'readOnly' : opt.name] = this.propsProxy[opt.name];
         this[opt.name === 'readonly' ? 'readOnly' : opt.name] = this.propsProxy[opt.name];
+        if (opt.name === 'multiple') {
+            this.propsProxy.placeholder = this.getPlaceholder(this.propsProxy[opt.name]);
+            this.holderEl.innerHTML = this.propsProxy.placeholder;
+        }
     }
     changedTools(opt) {
         this.toolsEl && this.toolsEl.remove();
@@ -35090,6 +35115,8 @@ class InputElem extends CompBaseCommField {
     type;
     select;
     btnEvt;
+    viewEl;
+    countEl;
     constructor() {
         super();
         this.type = 'text-comp';
@@ -35115,6 +35142,7 @@ class InputElem extends CompBaseCommField {
             (tmp !== this.inputEl.value) && this.listen({ name: 'changed', params: [data] });
         }, false);
     }
+    static jsonAttrs = ['lang', 'password'];
     static custAttrs = ['name', 'placeholder', 'type', 'size', 'limit', 'tools', 'icon', 'cube', 'disk', 'image', 'btn', 'action', 'label', 'unit', 'custom', 'mean', 'task', 'attrs', ...this.evtsArr];
     static boolAttrs = ['disabled', 'readonly', 'blocked', 'full'];
     static get observedAttributes() {
@@ -35149,6 +35177,11 @@ class InputElem extends CompBaseCommField {
         this.btnEl = createEl('span', { [orca.alias]: 'btn' });
         this.customEl = createEl('span', { [orca.alias]: 'custom' });
         this.meanEl = createEl('i', { [orca.alias]: 'mean' });
+        this.viewEl = createEl('i', { [orca.alias]: 'view' });
+        this.countEl = createEl('s', { [orca.alias]: 'count' });
+        this.viewEl.onclick = () => {
+            (this.viewEl.classList.contains(`${orca.prefix}icon-eye`)) ? this.autoShowPass() : this.autoHidePass();
+        };
     }
     updateLimit() {
         let total = ~~this.propsProxy.limit, value = this.propsProxy.value, len = value.length, tmp = total - len, remaining = tmp <= 0 ? 0 : tmp;
@@ -35196,6 +35229,7 @@ class InputElem extends CompBaseCommField {
         limit: this.changedLimit,
         tools: this.changedTools,
         attrs: this.changedAttrs,
+        password: this.changedPassword,
     };
     changedBool(opt) {
         if (opt.name === 'blocked') {
@@ -35330,6 +35364,40 @@ class InputElem extends CompBaseCommField {
         }
         else {
             this.meanEl.onclick = null;
+        }
+    }
+    autoHidePass() {
+        classes(this.viewEl).replace(`${orca.prefix}icon-eye-off`, `${orca.prefix}icon-eye`);
+        this.inputEl.setAttribute('type', 'password');
+        this.countEl.innerHTML = '';
+    }
+    autoShowPass() {
+        classes(this.viewEl).replace(`${orca.prefix}icon-eye`, `${orca.prefix}icon-eye-off`);
+        this.inputEl.setAttribute('type', 'text');
+        if (this.propsProxy.password?.autohide) {
+            this.propsProxy.password?.countdown && elState(this.countEl).isVirtual && this.viewEl.appendChild(this.countEl);
+            this.countdown(~~this.propsProxy.password.autohide);
+        }
+    }
+    countdown(seconds) {
+        let remaining = seconds, timer = setInterval(() => {
+            this.propsProxy.password?.countdown && (this.countEl.innerHTML = remaining);
+            remaining--;
+            if (remaining < 0) {
+                clearInterval(timer);
+                this.autoHidePass();
+            }
+        }, 1000);
+    }
+    changedPassword(opt) {
+        if (this.propsProxy.type !== 'password')
+            return;
+        if (isNull(opt.newVal)) {
+            this.viewEl.remove();
+        }
+        else {
+            this.inputEl.insertAdjacentElement('afterend', this.viewEl);
+            (this.propsProxy.password?.visible) ? this.autoShowPass() : this.autoHidePass();
         }
     }
 }
@@ -35599,8 +35667,7 @@ class RadiosElem extends CompBaseCommField {
         this.wrapEl = createEl('div', { [orca.alias]: 'wrap' });
         data['wrap-classes'] && classes(this.wrapEl).add(data['wrap-classes']);
         if (data.layout === 'grid') {
-            this.wrapEl.classList.add(`${orca.prefix}grid`);
-            data.cols && this.wrapEl.classList.add(`${orca.prefix}avg-${data.cols}`);
+            this.wrapEl.classList.add(`${orca.prefix}grid`, `${orca.prefix}avg-${data.cols || 4}`);
         }
         else if (data.layout === 'flex') {
             this.wrapEl.classList.add(`${orca.prefix}row`);
@@ -35771,8 +35838,7 @@ class CheckboxesElem extends CompBaseCommField {
         this.wrapEl = createEl('div', { [orca.alias]: 'wrap' });
         data['wrap-classes'] && classes(this.wrapEl).add(data['wrap-classes']);
         if (data.layout === 'grid') {
-            this.wrapEl.classList.add(`${orca.prefix}grid`);
-            data.cols && this.wrapEl.classList.add(`${orca.prefix}avg-${data.cols}`);
+            this.wrapEl.classList.add(`${orca.prefix}grid`, `${orca.prefix}avg-${data.cols || 4}`);
         }
         else if (data.layout === 'flex') {
             this.wrapEl.classList.add(`${orca.prefix}row`);
@@ -36168,7 +36234,7 @@ class StatsElem extends CompBaseComm {
     }
     static dependencies = [{ tag: 'oc-badge', comp: BadgeElem }];
     static custAttrs = ['unit', 'tips', 'icon', 'disk', 'cube', 'image', 'badge', 'dir', ...this.baseAttrs];
-    static boolAttrs = ['inverted', 'disabled'];
+    static boolAttrs = ['flipped', 'disabled'];
     static get observedAttributes() {
         return ['label', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
     }
@@ -36316,8 +36382,8 @@ class IconElem extends CompBaseComm {
         this.fillWrap(this.propsProxy);
     }
     static dependencies = [{ tag: 'oc-badge', comp: BadgeElem }];
-    static custAttrs = ['tips', 'type', 'badge', 'dir', 'bg', 'href', 'target', 'rel', 'download', ...this.baseAttrs];
-    static boolAttrs = ['disabled'];
+    static custAttrs = ['tips', 'shape', 'badge', 'dir', 'theme', 'href', 'target', 'rel', 'download', ...this.baseAttrs];
+    static boolAttrs = ['disabled', 'pictorial'];
     static get observedAttributes() {
         return ['label', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
     }
@@ -36335,66 +36401,35 @@ class IconElem extends CompBaseComm {
         this.headEl = createEl('span', { [orca.alias]: 'head' });
         this.wrapEl = createEl(data.href ? 'a' : 'div', { [orca.alias]: 'wrap' }, this.headEl);
         this.iconEl = createEl('i', { [orca.alias]: 'icon', class: data.label });
-        this.diskEl = createEl('span', { [orca.alias]: 'disk' }, `<img src="${data.label}"/>`);
-        this.cubeEl = createEl('span', { [orca.alias]: 'cube' }, `<img src="${data.label}"/>`);
+        
         this.imageEl = createEl('span', { [orca.alias]: 'image' }, `<img src="${data.label}"/>`);
         this.tipsEl = createEl('div', { [orca.alias]: 'tips' }, data.tips);
-        this.toggleLegend('icon');
+        this.toggleLegend(false);
         this.badgeEl = createEl('oc-badge', { [orca.alias]: 'badge', label: data?.badge?.trim() });
     }
-    setLegendBg(theme, old) {
+    setTheme(theme, old) {
         if (theme) {
-            classes(this.iconEl).replace(`${orca.prefix}bg-${old}`, `${orca.prefix}bg-${theme}`);
-            classes(this.diskEl).replace(`${orca.prefix}bg-${old}`, `${orca.prefix}bg-${theme}`);
-            classes(this.cubeEl).replace(`${orca.prefix}bg-${old}`, `${orca.prefix}bg-${theme}`);
+            classes(this.headEl).replace(`${orca.prefix}bg-${old}`, `${orca.prefix}bg-${theme}`);
         }
         else {
-            this.iconEl.classList.remove(`${orca.prefix}bg-${old}`);
-            this.diskEl.classList.remove(`${orca.prefix}bg-${old}`);
-            this.cubeEl.classList.remove(`${orca.prefix}bg-${old}`);
+            this.headEl.classList.remove(`${orca.prefix}bg-${old}`);
         }
     }
-    toggleLegend(type) {
-        let map = [{
-                type: 'icon',
-                show: this.iconEl,
-                hide: [this.diskEl, this.imageEl, this.cubeEl],
-            }, {
-                type: 'disk',
-                show: this.diskEl,
-                hide: [this.iconEl, this.imageEl, this.cubeEl],
-            }, {
-                type: 'cube',
-                show: this.cubeEl,
-                hide: [this.diskEl, this.imageEl, this.iconEl],
-            }, {
-                type: 'image',
-                show: this.imageEl,
-                hide: [this.diskEl, this.cubeEl, this.iconEl],
-            }];
-        let item = map.find((k) => k.type === type);
-        if (item) {
-            for (let k of item.hide)
-                k.remove();
-            elState(item.show).isVirtual && this.headEl.insertAdjacentElement('afterbegin', item.show);
-            this.legendEl = item.show;
+    toggleLegend(isImage) {
+        if (isImage) {
+            this.iconEl.remove();
+            this.imageEl.src = this.propsProxy.label;
+            this.headEl.insertAdjacentElement('afterbegin', this.imageEl);
         }
         else {
-            this.iconEl.remove();
-            this.cubeEl.remove();
-            this.diskEl.remove();
             this.imageEl.remove();
+            this.iconEl.setAttribute('class', this.propsProxy.label);
+            this.headEl.insertAdjacentElement('afterbegin', this.iconEl);
         }
     }
     render() {
         this.insertSource();
         this.appendChild(this.wrapEl);
-        !this.hasAttribute('dir') && this.setAttribute('dir', 'h');
-        if (!this.hasAttribute('type')) {
-            this.canListen = false;
-            this.setAttribute('type', 'icon');
-            this.canListen = true;
-        }
     }
     changedMaps = {
         label: this.changedLabel,
@@ -36404,20 +36439,15 @@ class IconElem extends CompBaseComm {
         rel: this.changedTarget,
         download: this.changedTarget,
         tips: this.changedTips,
-        type: this.changedType,
-        bg: this.changedBg,
+        theme: this.changedTheme,
+        pictorial: this.changedPictorial,
     };
     changedLabel(opt) {
-        if (opt.newVal === null) {
-            this.toggleLegend();
+        if (this.propsProxy.pictorial) {
+            this.imageEl.src = opt.newVal;
         }
         else {
-            if (this.legendEl.nodeName === 'I') {
-                this.legendEl.setAttribute('class', opt.newVal);
-            }
-            else {
-                this.legendEl.querySelector('img').src = opt.newVal;
-            }
+            this.iconEl.setAttribute('class', opt.newVal);
         }
     }
     changedBadge(opt) {
@@ -36456,11 +36486,12 @@ class IconElem extends CompBaseComm {
             this.wrapEl.appendChild(this.tipsEl);
         }
     }
-    changedBg(opt) {
-        this.setLegendBg(opt.newVal, opt.oldVal);
+    changedTheme(opt) {
+        this.setTheme(opt.newVal, opt.oldVal);
     }
-    changedType(opt) {
-        this.toggleLegend(opt.newVal);
+    
+    changedPictorial(opt) {
+        this.toggleLegend(this.propsProxy.pictorial);
     }
 }
 
@@ -36608,10 +36639,11 @@ class ProgressElem extends CompBaseComm {
     attributeChangedCallback(name, oldVal, newVal) {
         if (!this.canListen)
             return;
-        if (name === 'value') {
+        if (name === 'value' || name === 'duration') {
             if (!this.connected || !this.ins)
                 return;
             let duration = this.getAttribute('duration'), value = this.getVal(newVal);
+            duration && (this.ins.options.duration = ~~duration);
             if (duration == 0) {
                 this.ins.locateTo(value);
             }
@@ -37514,8 +37546,12 @@ class CalloutElem extends CompBaseComm {
         if (opt.newVal !== null) {
             this.progEl.setAttribute('duration', opt.newVal || 3000);
             elState(this.progEl).isVirtual && this.wrapEl.appendChild(this.progEl);
-            this.progEl?.ins?.on('zero', () => {
-                this.closeEl.click();
+            this.progEl?.ins?.on('zero', (data) => {
+                if (this.progEl.ins.vals.val === 0) {
+                    this.toggleAttribute('hidden', true);
+                }
+            }).on('updated', () => {
+                this.progEl.ins.vals.val = 0;
             });
             this.onmouseenter = () => {
                 this.progEl.ins.pause();
@@ -37681,7 +37717,7 @@ class StepElem extends CompBaseComm {
         this.fillWrap(this.propsProxy);
     }
     static custAttrs = ['active', 'type', 'theme', 'dir', 'error', ...this.baseAttrs];
-    static boolAttrs = ['head-show', 'body-show', 'inverted', 'justify'];
+    static boolAttrs = ['head-show', 'body-show', 'flipped', 'justify'];
     static get observedAttributes() {
         return ['content', ...this.custAttrs, ...this.boolAttrs, ...this.jsonAttrs];
     }
