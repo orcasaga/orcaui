@@ -3,6 +3,41 @@
 All changes to OrcaUI including new features, updates, and removals are documented here.
 
 
+## [v1.0.4] - 2025-07-08
+
+### Distribution Files
+- **JS**: https://unpkg.com/orcaui@1.0.4/dist/js/orca.js
+- **CSS**: https://unpkg.com/orcaui@1.0.4/dist/css/orca.css
+- **Zip**: https://unpkg.com/orcaui@1.0.4/dist.zip
+
+### Changes
+
+#### Fixed
+- Fixed `Range` component's `reset` method not working.
+- Changed `Range` library parameter from `aixs` to `flow` with values `h/v`.
+- Adjusted max height for `Popup` and `Dialog` libraries to reduce scrollbar usage.
+- Modified `Datetime` library to support US date format and milliseconds.
+- Changed `Datetime` library's default output format to `YYY-MM-DD`.
+- Added new output format properties to `Datetime`: d, ddd, dddd, H, A, a, W, WW, w, ww.
+- Updated `Datetime` parameter `weekStart` to accept ISO or USA values.
+- Fixed incorrect year/month dropdown height in mobile view for `Datetime`.
+- Improved BC/AD date handling for `Datetime` (e.g., 0000-12-12 now shows "1 BC").
+- Fixed toolbox color issue in `Select` component.
+- Resolved `Search` component error when using `shape` property.
+- Fixed `Search` component issues with `shape`, `notable`, and `size` properties.
+
+#### Added
+- New functions: `dateTools.getIsoDate`, `dateTools.getYearWeek`, `dateTools.get12Hour`.
+- Added rounded corners to `Drawer` component when placement=bottom.
+- New `Datetime` parameter: `headFormat` (accepts ISO/USA).
+- Changed default `separator` in `Datetime` to ";" for better US/EU compatibility.
+- Added `width` parameter to `Progress` library (distinct from `size`).
+
+#### Removed
+- Removed deprecated `dateTools.toSlash` function.
+- Replaced `_field` style class with `oc-field` node naming.
+
+
 ## [v1.0.3] - 2025-07-01
 
 ### Distribution Files
@@ -34,6 +69,28 @@ All changes to OrcaUI including new features, updates, and removals are document
 
 #### Removed
 - Removed CSS variable `--_c-divide`
+
+
+## [v1.0.2] - 2025-06-23
+
+### Distribution Files
+- **JS**: https://unpkg.com/orcaui@1.0.2/dist/js/orca.js
+- **CSS**: https://unpkg.com/orcaui@1.0.2/dist/css/orca.css
+- **Zip**: https://unpkg.com/orcaui@1.0.2/dist.zip
+
+### Changes
+
+#### Fixed
+- Optimized iconfont by keeping only framework-essential icons, reducing packed CSS by **20KB**  
+- Refactored CSS into modular files for granular imports  
+- Updated components to support CSS tree-shaking through proper file references
+
+#### Added
+- No new features in this release
+
+#### Removed
+- Toggle component and associated styles deprecated
+
 
 ## [v1.0.1] - 2025-05-24
 

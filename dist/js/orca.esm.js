@@ -1,8 +1,8 @@
 
 /*!
- * @since Last modified: 2025-7-1 19:4:7
+ * @since Last modified: 2025-7-8 10:22:48
  * @name OrcaUI front-end framework.
- * @version 1.0.3
+ * @version 1.0.4
  * @author OrcaUI development team <orcasaga@outlook.com>
  * @description OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.
  * @see {@link https://www.orcaui.com|Official website}
@@ -359,16 +359,27 @@ const lang = {
     },
     datetime: {
         month: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-        week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        weeks: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        month_s: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        
+        day: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        day_s: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        day_ss: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
         year: {
             prev: 'Prev',
             next: 'Next',
             placeholder: 'Enter year'
         },
+        week: {
+            year: 'Week {{this.data}}/Year',
+            month: 'Week {{this.data}}/Month',
+        },
         range: {
-            hyphen: 'to',
+            hyphen: ' ~ ',
             checkbox: 'Select same day'
+        },
+        suffix: {
+            Y: '',
+            M: '',
         },
         unit: {
             Y: 'Year',
@@ -379,7 +390,8 @@ const lang = {
             m: 'Minute',
             s: 'Second'
         },
-        bc: 'BC',
+        BC: 'BC',
+        AD: 'AD',
         daytime: {
             select: 'Time Selection',
             start: 'Start Time',
@@ -397,7 +409,7 @@ const lang = {
             requireYearFormat: 'Please enter a valid year format!',
             requireOneSelected: 'At least one date must be selected!'
         },
-        noEvent: `<i class="${orca.prefix}c-ignore">No events scheduled today!</i>`
+        noEvent: `<i class="${orca.prefix}c-caption">No events scheduled today!</i>`
     },
     rate: {
         title: {
@@ -414,8 +426,8 @@ const lang = {
         defer: 'Click to load content',
         placeholder: 'Please enter...',
         path: 'Path:',
-        chars: 'Characters:',
-        paras: 'Paragraphs:',
+        chars: 'Chars:',
+        paras: 'Paras:',
         fontsizeDft: 'Default Font Size',
         alignDft: 'Default Alignment',
         tagsDft: 'Special Tags',
@@ -478,9 +490,9 @@ const lang = {
             placeholder: 'Enter keyword...'
         },
         check: {
-            ed: 'None selected, select all',
-            ing: 'Some selected, select all',
-            none: 'All selected, deselect all'
+            ed: 'None, select all',
+            ing: 'Some, select all',
+            none: 'All, deselect all'
         },
         stats: `{{this.value}}/{{this.total}} selected`
     },
@@ -7404,29 +7416,71 @@ const parseUrlArr = (url, opts = {}) => {
 };
 
 const dateTools = {
-    toSlash: (data) => {
-        return data.replaceAll('-', '/');
-    },
     getTimeObj: function (str) {
-        let tmp = str.replaceAll(' ', '').split(':'), result = { hh: 0, mm: 0, ss: 0 };
+        let tmp = str.replaceAll(' ', '').split(':'), result = { H: 0, m: 0, s: 0, SSS: 0, h: 0, A: 'AM', a: 'am' };
         if (str) {
             if (tmp.length < 2) {
-                result.hh = ~~str || 0;
+                result.H = ~~str || 0;
             }
             else {
-                result.hh = ~~tmp[0] || 0;
-                result.mm = ~~tmp[1] || 0;
-                result.ss = ~~tmp[2] || 0;
+                result.H = ~~tmp[0];
+                result.m = ~~tmp[1];
+                result.s = ~~tmp[2];
+                result.SSS = ~~tmp[3];
             }
+            let temp = this.get12Hour(result.H);
+            result.h = temp.h;
+            result.A = temp.A;
+            result.a = temp.a;
         }
         return result;
     },
     int2Date: (value, type = 'datetime') => {
         value = ~~value;
-        let prop = (type === 'daytime') ? 'hh' : (type === 'month') ? 'MM' : 'YYYY';
+        let prop = (type === 'daytime') ? 'H' : (type === 'month') ? 'M' : 'Y';
         return { value, prop };
     },
-    getDate: function (data, type = 'datetime', lang = config.lang.datetime) {
+    get12Hour: function (hours) {
+        let tmp = clampVal({ min: 0, max: 24, val: hours }), h = !tmp ? 0 : (tmp % 12 || 12), a = !tmp ? 'am' : (tmp >= 12 ? 'pm' : 'am');
+        return {
+            h,
+            hh: this.fillZero(h),
+            a,
+            A: a.toUpperCase(),
+        };
+    },
+    getIsoDate: function (input) {
+        if (!input.includes('T'))
+            return input;
+        input = input.trim().replaceAll('/', '-');
+        let isBC = input.startsWith('-') ? true : false;
+        isBC && input.slice(1);
+        let tzMatch = input.match(/(Z|[+-]\d{1,2}(?::\d{1,2})?)$/), timezone = '', core = input;
+        if (tzMatch) {
+            timezone = tzMatch[0];
+            core = input.slice(0, -timezone.length);
+            if (timezone !== 'Z') {
+                let sign = timezone[0], rest = timezone.slice(1), [h = '0', m = '0'] = rest.split(':'), hour = this.fillZero(h), minute = this.fillZero(m);
+                timezone = `${sign}${hour}:${minute}`;
+            }
+        }
+        let [datePart, timePartRaw = ''] = core.split('T'), [year, month = '1', day = '1'] = datePart.split('-'), [timePart, milliPart = ''] = timePartRaw.split('.'), [hour = '0', minute = '0', second = '0'] = timePart.split(':');
+        if (milliPart) {
+            milliPart = (milliPart + '000').slice(0, 3);
+        }
+        let paddedDate = [
+            (isBC ? this.fillZero('-' + year, 6) : this.fillZero(year, 4)),
+            this.fillZero(month),
+            this.fillZero(day)
+        ].join('-'), paddedTime = [
+            this.fillZero(hour),
+            this.fillZero(minute),
+            this.fillZero(second),
+        ].join(':'), milliseconds = milliPart ? `.${milliPart}` : '';
+        return `${paddedDate}T${paddedTime}${milliseconds}${timezone}`;
+    },
+    getDate: function (data, type, lang = config.lang.datetime) {
+        type = type || 'datetime';
         let dateType = getDataType(data), result;
         if (isEmpty(data)) {
             result = new Date();
@@ -7436,52 +7490,62 @@ const dateTools = {
                 result = new Date(data.valueOf());
             }
             else if (dateType === 'String') {
-                let isBc = data.includes(lang.bc);
-                data = this.toSlash(trim(data).replace(lang.bc, ''));
-                if (data.includes(' ')) {
-                    result = new Date(data);
-                    if (!data.includes('/')) {
-                        console.warn('Invalid date format, current date used instead!');
-                        result = new Date();
-                    }
-                    else {
-                        let tmp = data.split(' '), tmpStart = tmp[0].split('/'), tmpEnd = tmp[1].split(':'), tmpFlat, tmpDate;
-                        tmpStart[1] = tmpStart[1] ? tmpStart[1] - 1 : 0;
-                        tmpStart[2] = tmpStart[2] || 0;
-                        tmpEnd[1] = tmpEnd[1] || 0;
-                        tmpEnd[2] = tmpEnd[2] || 0;
-                        tmpFlat = [...tmpStart, ...tmpEnd].map((k) => ~~k);
-                        isBc && (tmpFlat[0] = tmpFlat[0] * -1);
-                        tmpDate = new Date(...tmpFlat);
-                        tmpDate.setFullYear(tmpFlat[0]);
-                        result = tmpDate;
-                    }
-                }
-                else {
-                    if (data.includes(':')) {
-                        result = new Date('1970/1/1 ' + data);
-                    }
-                    else if (data.includes('/')) {
-                        let tmp = data.split('/').map((k) => ~~k);
-                        tmp[1] && tmp[1]--;
-                        isBc && (tmp[0] = tmp[0] * -1);
-                        result = new Date(...tmp);
-                    }
-                    else {
-                        result = new Date('1970/1/1 00:00:00');
+                
+                let isBc = data.includes(lang.BC) || data.startsWith('-');
+                data = trim(data.replace(lang.BC, '').replace(lang.AD, '')).replaceAll('/', '-');
+                data.startsWith('-') && (data = data.slice(1));
+                try {
+                    if (!data.includes(' ') && !data.includes(':') && !data.includes('-')) {
+                        result = new Date('1970-01-01 00:00:00.000');
                         let tmp = this.int2Date(data, type);
-                        tmp.prop === 'hh' ? result.setHours(tmp.value) : tmp.prop === 'MM' ? result.setMonth(tmp.value - 1) : result.setFullYear(isBc ? tmp.value * -1 : tmp.value);
+                        tmp.prop === 'H' ? result.setHours(tmp.value) :
+                            tmp.prop === 'M' ? result.setMonth(tmp.value - 1) :
+                                result.setFullYear(tmp.value);
                     }
+                    else if (!data.includes(' ') && !data.includes('T') && data.includes(':')) {
+                        result = new Date('1970-01-01 ' + data);
+                    }
+                    else {
+                        if (data.includes('T')) {
+                            data = this.getIsoDate(data);
+                        }
+                        else {
+                            if (data.includes('-')) {
+                                if (data.includes(':')) {
+                                    data = this.getIsoDate(data.replace(' ', 'T'));
+                                }
+                                else {
+                                    data = data.split('-').map((k, i) => this.fillZero(k, !i ? 4 : 2)).join('-');
+                                }
+                            }
+                        }
+                        result = new Date(data);
+                        if (!data.includes(':')) {
+                            result.setHours(0);
+                            result.setMinutes(0);
+                            result.setSeconds(0);
+                            result.setMilliseconds(0);
+                        }
+                    }
+                    isBc && result.setFullYear(result.getFullYear() * -1);
+                }
+                catch {
+                    console.warn('Invalid date format, current date used instead!');
+                    result = new Date();
                 }
             }
             else if (dateType === 'Object') {
-                result = new Date('1970/1/1 00:00:00');
-                data.hasOwnProperty('YYYY') && result.setFullYear(data.YYYY);
-                data.hasOwnProperty('MM') && result.setMonth(data.MM);
-                data.hasOwnProperty('DD') && result.setDate(data.DD);
-                data.hasOwnProperty('hh') && result.setHours(data.hh);
-                data.hasOwnProperty('mm') && result.setMinutes(data.mm);
-                data.hasOwnProperty('ss') && result.setSeconds(data.ss);
+                result = new Date('1970-01-01 00:00:00.000');
+                data.hasOwnProperty('Y') && result.setFullYear(data.Y);
+                data.hasOwnProperty('M') && result.setMonth(data.M);
+                data.hasOwnProperty('D') && result.setDate(data.D);
+                data.hasOwnProperty('H') && result.setHours(data.H);
+                data.hasOwnProperty('m') && result.setMinutes(data.m);
+                data.hasOwnProperty('s') && result.setSeconds(data.s);
+                data.hasOwnProperty('SSS') && result.setMilliseconds(data.SSS);
+            }
+            else if (dateType === 'Number') {
+                result = new Date(data);
             }
             else {
                 result = new Date();
@@ -7501,26 +7565,76 @@ const dateTools = {
         }
         return result;
     },
-    getDateObj: function (data, type = 'datetime') {
+    getYearWeek: function (date = new Date(), weekStart = 'ISO') {
+        let d = this.getDate(date);
+        d.setHours(0, 0, 0, 0);
+        if (weekStart === 'USA') {
+            let yearStart = new Date(d.getFullYear(), 0, 1), pastDaysOfYear = (d - yearStart) / 86400000;
+            return Math.ceil((pastDaysOfYear + yearStart.getDay() + 1) / 7);
+        }
+        else {
+            d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+            let yearStart = new Date(d.getFullYear(), 0, 1), dayNum = Math.floor((d - yearStart) / 86400000);
+            return Math.ceil((dayNum + 1) / 7);
+        }
+    },
+    getMonthWeek: function (date = new Date(), weekStart = 'ISO') {
+        let d = this.getDate(date);
+        d.setHours(0, 0, 0, 0);
+        let firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+        if (weekStart === 'USA') {
+            let daysFromStart = (d - firstDayOfMonth) / 86400000;
+            return Math.ceil((daysFromStart + firstDayOfMonth.getDay() + 1) / 7);
+        }
+        else {
+            let adjustedDate = new Date(d);
+            adjustedDate.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+            let adjustedFirstDay = new Date(firstDayOfMonth);
+            adjustedFirstDay.setDate(firstDayOfMonth.getDate() + 3 - (firstDayOfMonth.getDay() + 6) % 7);
+            let weekDiff = (adjustedDate - adjustedFirstDay) / 604800000;
+            return Math.floor(weekDiff) + 1;
+        }
+    },
+    getDateObj: function (data, type = 'datetime', weekStart = 'ISO') {
         let dataType = getDataType(data), date, result;
         if (dataType === 'Object') {
             result = { ...data };
         }
         else {
-            date = this.getDate(data, type);
-            result = { YYYY: date.getFullYear(), MM: date.getMonth(), DD: date.getDate(), hh: date.getHours(), mm: date.getMinutes(), ss: date.getSeconds() };
+            date = this.getDate(data, type === 'full' ? 'datetime' : type);
+            result = {
+                Y: date.getFullYear(),
+                M: date.getMonth(),
+                D: date.getDate(),
+                H: date.getHours(),
+                m: date.getMinutes(),
+                s: date.getSeconds(),
+                SSS: date.getMilliseconds(),
+            };
+            if (type === 'full') {
+                result.d = date.getDay();
+                result.W = this.getYearWeek(date, weekStart);
+                result.w = this.getMonthWeek(date, weekStart);
+                let tmp = this.get12Hour(result.H);
+                result.h = tmp.h;
+                result.A = tmp.A;
+                result.a = tmp.a;
+            }
         }
         if (['date', 'year', 'month'].includes(type)) {
-            Reflect.deleteProperty(result, 'hh');
-            Reflect.deleteProperty(result, 'mm');
-            Reflect.deleteProperty(result, 'ss');
-            ['year', 'month'].includes(type) && Reflect.deleteProperty(result, 'DD');
-            type === 'year' && Reflect.deleteProperty(result, 'MM');
+            Reflect.deleteProperty(result, 'H');
+            Reflect.deleteProperty(result, 'm');
+            Reflect.deleteProperty(result, 's');
+            Reflect.deleteProperty(result, 'SSS');
+            if (['year', 'month'].includes(type)) {
+                Reflect.deleteProperty(result, 'D');
+            }
+            type === 'year' && Reflect.deleteProperty(result, 'M');
         }
         else if (type === 'daytime') {
-            Reflect.deleteProperty(result, 'YYYY');
-            Reflect.deleteProperty(result, 'MM');
-            Reflect.deleteProperty(result, 'DD');
+            Reflect.deleteProperty(result, 'Y');
+            Reflect.deleteProperty(result, 'M');
+            Reflect.deleteProperty(result, 'D');
         }
         return result;
     },
@@ -7528,62 +7642,142 @@ const dateTools = {
         let curDate = this.getDate(data), curYear = curDate.getFullYear(), curMonth = curDate.getMonth();
         return new Date(curYear, curMonth + 1, 0).getDate();
     },
-    getOffsetDate: function (data, options = { YYYY: 0, MM: 0, DD: 0, hh: 0, mm: 0, ss: 0 }) {
+    getOffsetDate: function (data, options) {
         let curDate = this.getDate(data);
-        options.hasOwnProperty('ss') && curDate.setDate(curDate.getSeconds() + options.ss);
-        options.hasOwnProperty('mm') && curDate.setDate(curDate.getMinutes() + options.mm);
-        options.hasOwnProperty('hh') && curDate.setDate(curDate.getHours() + options.hh);
-        options.hasOwnProperty('DD') && curDate.setDate(curDate.getDate() + options.DD);
-        options.hasOwnProperty('MM') && curDate.setMonth(curDate.getMonth() + options.MM);
-        options.hasOwnProperty('YYYY') && curDate.setFullYear(curDate.getFullYear() + options.YYYY);
+        options.hasOwnProperty('SSS') && curDate.setDate(curDate.getMilliseconds() + options.SSS);
+        options.hasOwnProperty('s') && curDate.setDate(curDate.getSeconds() + options.s);
+        options.hasOwnProperty('m') && curDate.setDate(curDate.getMinutes() + options.m);
+        options.hasOwnProperty('H') && curDate.setDate(curDate.getHours() + options.H);
+        options.hasOwnProperty('D') && curDate.setDate(curDate.getDate() + options.D);
+        options.hasOwnProperty('M') && curDate.setMonth(curDate.getMonth() + options.M);
+        options.hasOwnProperty('Y') && curDate.setFullYear(curDate.getFullYear() + options.Y);
         return curDate;
     },
-    fillZero: (data, places = 2) => data.toString().padStart(places, '0'),
-    fillFormat: function (date, format, lang = config.lang.datetime) {
-        let YYYY, MM, DD, hh, mm, ss, WW, weeks = lang.weeks, tmp = this.getDate(date);
-        YYYY = tmp.getFullYear();
-        MM = tmp.getMonth() + 1;
-        DD = tmp.getDate();
-        WW = tmp.getDay();
-        hh = tmp.getHours();
-        mm = tmp.getMinutes();
-        ss = tmp.getSeconds();
+    fillZero: function (data, places = 2) {
+        let tmp = Math.abs(data).toString().padStart(places, '0');
+        return data < 0 ? '-' + tmp : tmp;
+    },
+    fillFormat: function (date, options = {}) {
+        let opts = Object.assign({ format: 'YYYY-MM-DD', lang: config.lang.datetime, weekStart: 'ISO' }, options), format = opts.format, lang = opts.lang, tmp = this.getDate(date, 'datetime', lang), Y = tmp.getFullYear(), M = tmp.getMonth() + 1, MM = this.fillZero(M), MMM = lang.month_s[M - 1], MMMM = lang.month[M - 1], D = tmp.getDate(), DD = this.fillZero(D), d = tmp.getDay(), dd = lang.day_ss[d], ddd = lang.day_s[d], dddd = lang.day[d], H = tmp.getHours(), HH = this.fillZero(H), m = tmp.getMinutes(), mm = this.fillZero(m), s = tmp.getSeconds(), ss = this.fillZero(s), SSS = tmp.getMilliseconds(), { h, hh, a, A } = this.get12Hour(H), tags = {};
         if (format.includes('YYYY')) {
-            let tmp = Math.abs(YYYY) + '';
-            if (YYYY < 0) {
+            let tmp;
+            if (Y < 0) {
+                format.includes('AD') && (format = format.replace('AD', ''));
                 if (format.includes('BC')) {
-                    format = format.replace('BC', lang.bc);
+                    format = format.replace('BC', lang.BC);
+                    tmp = Math.abs(Y);
                 }
                 else {
-                    tmp = lang.bc + tmp;
+                    
+                    tmp = this.fillZero(Y, 6);
                 }
             }
             else {
                 format.includes('BC') && (format = format.replace('BC', ''));
+                if (format.includes('AD')) {
+                    format = format.replace('AD', lang.AD);
+                    tmp = Y;
+                }
+                else {
+                    tmp = Y < 100 ? this.fillZero(Y, 4) : Y;
+                }
             }
-            format = format.replace('YYYY', tmp);
+            tags.YYYY = tmp + '';
         }
-        format.includes('MM') && (format = format.replace('MM', this.fillZero(MM)));
-        format.includes('DD') && (format = format.replace('DD', this.fillZero(DD)));
-        format.includes('hh') && (format = format.replace('hh', this.fillZero(hh)));
-        format.includes('mm') && (format = format.replace('mm', this.fillZero(mm)));
-        format.includes('ss') && (format = format.replace('ss', this.fillZero(ss)));
-        format.includes('WW') && (format = format.replace('WW', weeks[WW]));
-        return format;
+        if (format.includes('MMMM')) {
+            tags.MMMM = MMMM;
+        }
+        else if (format.includes('MMM')) {
+            tags.MMM = MMM;
+        }
+        else if (format.includes('MM')) {
+            tags.MM = MM;
+        }
+        else if (format.includes('M')) {
+            tags.M = M;
+        }
+        if (format.includes('DD')) {
+            tags.DD = DD;
+        }
+        else if (format.includes('D')) {
+            tags.D = D;
+        }
+        if (format.includes('HH')) {
+            tags.HH = HH;
+        }
+        else if (format.includes('H')) {
+            tags.H = H;
+        }
+        if (format.includes('hh')) {
+            tags.hh = hh;
+        }
+        else if (format.includes('h')) {
+            tags.h = h;
+        }
+        if (format.includes('A')) {
+            tags.A = A;
+        }
+        else if (format.includes('a')) {
+            tags.a = a;
+        }
+        if (format.includes('mm')) {
+            tags.mm = mm;
+        }
+        else if (format.includes('m')) {
+            tags.m = m;
+        }
+        if (format.includes('ss')) {
+            tags.ss = ss;
+        }
+        else if (format.includes('s')) {
+            tags.s = s;
+        }
+        format.includes('SSS') && (tags.SSS = SSS);
+        if (format.includes('dddd')) {
+            tags.dddd = dddd;
+        }
+        else if (format.includes('ddd')) {
+            tags.ddd = ddd;
+        }
+        else if (format.includes('dd')) {
+            tags.dd = dd;
+        }
+        else if (format.includes('d')) {
+            tags.d = d;
+        }
+        if (format.includes('WWW')) {
+            tags.WWW = renderTpl(lang.week.year, { data: this.getYearWeek(tmp, opts.weekStart) });
+        }
+        else if (format.includes('WW')) {
+            tags.WW = '' + this.fillZero(this.getYearWeek(tmp, opts.weekStart));
+        }
+        else if (format.includes('W')) {
+            tags.W = '' + this.getYearWeek(tmp, opts.weekStart);
+        }
+        if (format.includes('www')) {
+            tags.www = renderTpl(lang.week.month, { data: this.getYearWeek(tmp, opts.weekStart) });
+        }
+        else if (format.includes('ww')) {
+            tags.ww = '' + this.fillZero(this.getMonthWeek(tmp, opts.weekStart));
+        }
+        else if (format.includes('w')) {
+            tags.w = '' + this.getMonthWeek(tmp, opts.weekStart);
+        }
+        return format.replace(/YYYY|MMMM|MMM|MM|M|DD|D|HH|HH|hh|h|mm|m|ss|s|SSS|A|a|dddd|ddd|dd|d|WWW|WW|W|www|ww|w/g, (match) => tags[match]);
     },
     sort: function (data, order = 'asc') {
         return data.sort((a, b) => order === 'asc' ? this.getDate(a) - this.getDate(b) : this.getDate(b) - this.getDate(a));
     },
     getDateType: (format) => {
-        return RegExp(/^(?=.*YYYY)(?=.*MM)(?=.*DD)(?=.*hh).*$/).test(format) ? 'datetime' :
-            RegExp(/^(?=.*YYYY)(?=.*MM)(?=.*DD).*$/).test(format) ? 'date' :
-                RegExp(/^(?=.*YYYY)(?=.*MM).*$/).test(format) ? 'month' :
-                    RegExp(/^(?=.*YYYY).*$/).test(format) ? 'year' :
-                        RegExp(/^(?=.*hh).*$/).test(format) ? 'daytime' : '';
+        return RegExp(/^(?=.*Y)(?=.*M)(?=.*D)(?=.*H).*$/).test(format) ? 'datetime' :
+            RegExp(/^(?=.*Y)(?=.*M)(?=.*D).*$/).test(format) ? 'date' :
+                RegExp(/^(?=.*Y)(?=.*M).*$/).test(format) ? 'month' :
+                    RegExp(/^(?=.*Y).*$/).test(format) ? 'year' :
+                        RegExp(/^(?=.*H).*$/).test(format) ? 'daytime' : '';
     },
     isSameDay: (a, b) => {
         
-        return a.YYYY == b.YYYY && a.MM == b.MM && a.DD == b.DD;
+        return a.Y == b.Y && a.M == b.M && a.D == b.D;
         
     }
 };
@@ -10347,13 +10541,13 @@ const prompt = (options) => {
     }
     for (let k of data) {
         let label = k.label ? `<div class="${orca.prefix}field-label">${k.label}</div>` : '', note = k.note ? `<div  class="${orca.prefix}field-note">${k.note}</div>` : '', attrs = Object.assign(k.type === 'upload' ? { feature: 'gallery' } : k.type === 'datetime' ? { display: 'inline', footer: false, 'auto-fill': true, } : {}, k.attrs), input = createEl(`oc-${k.type || 'input'}`, { ...attrs }), tpl = `
-            <section class="${orca.prefix}field ${orca.prefix}field-apart">
+            <oc-field type="apart">
                 ${label}
                 <div class="${orca.prefix}field-cont">
                     <div class="${orca.prefix}field-input"></div>
                     ${note}
                 </div>
-            </section>
+            </oc-field>
         `, dom = tplToEl(tpl);
         dom.querySelector(`.${orca.prefix}field-input`).appendChild(input);
         frags.appendChild(dom);
@@ -12850,11 +13044,11 @@ class Valid extends ModBaseListenCache {
             }
             this.options.placement = this.options.placement.trim();
             if (this.options.placement === 'down') {
-                let box = this.targetEl.closest(`.${orca.prefix}field`)?.querySelector(`.${orca.prefix}field-input`);
+                let box = this.targetEl.closest(`oc-field`)?.querySelector(`.${orca.prefix}field-input`);
                 box ? box.insertAdjacentElement('afterEnd', this.msgEl) : null;
             }
             else if (this.options.placement === 'right') {
-                let box = this.targetEl.closest(`.${orca.prefix}field`)?.querySelector(`.${orca.prefix}field-help`);
+                let box = this.targetEl.closest(`oc-field`)?.querySelector(`.${orca.prefix}field-help`);
                 box ? box.appendChild(this.msgEl) : null;
             }
             else if (this.options.placement === 'popup') {
@@ -21059,13 +21253,13 @@ const optProgress = [
         value: 'round',
     },
     {
-        attr: 'size',
-        prop: 'size',
+        attr: 'width',
+        prop: 'width',
         value: '',
     },
     {
-        attr: 'thk',
-        prop: 'thk',
+        attr: 'size',
+        prop: 'size',
         value: '',
     },
     {
@@ -21294,7 +21488,7 @@ class Progress extends ModBaseListenCache {
         this.targetEl.classList.add(`${orca.prefix}progress`);
         this.targetEl.setAttribute('linecap', this.options.linecap);
         this.targetEl.setAttribute('type', this.options.type);
-        this.options.thk ? this.targetEl.setAttribute('thk', this.options.thk) : this.targetEl.removeAttribute('thk');
+        this.options.width ? this.targetEl.setAttribute('width', this.options.width) : this.targetEl.removeAttribute('width');
         this.options.size ? this.targetEl.setAttribute('size', this.options.size) : this.targetEl.removeAttribute('size');
         this.options.theme ? this.targetEl.setAttribute('theme', this.options.theme) : this.targetEl.removeAttribute('theme');
         this.targetEl.toggleAttribute('gradient', this.options.gradient);
@@ -24568,9 +24762,9 @@ const optRange = [
         value: OCTMP_hyphen,
     },
     {
-        attr: 'axis',
-        prop: 'axis',
-        value: 'x',
+        attr: 'flow',
+        prop: 'flow',
+        value: 'h',
     },
     {
         attr: 'disabled',
@@ -24674,16 +24868,16 @@ class Range extends ModBaseListenCache {
             component: true,
             spread: ['button', 'ruler', 'result', 'fence']
         });
-        if (this.options.axis === 'x') {
-            this.propsMap = propsMap[this.options.axis];
+        if (this.options.flow === 'h') {
+            this.propsMap = propsMap.x;
         }
         else {
-            this.propsMap = propsMap[this.options.axis];
+            this.propsMap = propsMap.y;
             this.propsMap.position = 'bottom';
             this.propsMap.start = 'insetBlockEnd';
             this.propsMap.startAlt = 'inset-block-end';
         }
-        this.axisCoef = this.options.axis === 'y' ? -1 : 1;
+        this.axisCoef = this.options.flow === 'v' ? -1 : 1;
         this.resizeObs = new ResizeObserver(debounce(() => {
             this.updateSizes();
         }));
@@ -24757,7 +24951,7 @@ class Range extends ModBaseListenCache {
                 this.tmpRatios = [...this.output.ratio];
                 this.gestures.thumb = new Gesture(this.thumbEl, {
                     onTranslating: (e) => {
-                        this.slideSet(this.thumbEl, e.translate.diff[this.options.axis] * this.axisCoef);
+                        this.slideSet(this.thumbEl, e.translate.diff[this.propsMap.axis] * this.axisCoef);
                     },
                     onTranslated: () => {
                         this.tmpRatios = [...this.output.ratio];
@@ -24772,7 +24966,7 @@ class Range extends ModBaseListenCache {
                 if (!clientObj) {
                     return false;
                 }
-                offset = (clientObj[this.options.axis] - this.baseEl.getBoundingClientRect()[this.propsMap.position]) * this.axisCoef;
+                offset = (clientObj[this.propsMap.axis] - this.baseEl.getBoundingClientRect()[this.propsMap.position]) * this.axisCoef;
                 if (this.options.multiple) {
                     let fromOffset = this.output.ratio[0] * this.sizes.track, toOffset = this.output.ratio[1] * this.sizes.track;
                     if (offset > toOffset) {
@@ -24791,7 +24985,7 @@ class Range extends ModBaseListenCache {
                 this.thumbEl.onclick = (e) => {
                     let clientObj = getClientObj(e), offset;
                     if (clientObj) {
-                        offset = (clientObj[this.options.axis] - this.baseEl.getBoundingClientRect()[this.propsMap.position]) * this.axisCoef;
+                        offset = (clientObj[this.propsMap.axis] - this.baseEl.getBoundingClientRect()[this.propsMap.position]) * this.axisCoef;
                         this.slideSet(this.handles.single, offset - this.sizes.handle / 2);
                     }
                 };
@@ -24852,7 +25046,7 @@ class Range extends ModBaseListenCache {
                 this.offset = style(this.handles[type])[this.propsMap.start];
             },
             onTranslating: (e) => {
-                let diff = e.translate.diff[this.options.axis] * this.axisCoef * super.getRtlCoef(), value = parseFloat(this.offset) + diff;
+                let diff = e.translate.diff[this.propsMap.axis] * this.axisCoef * super.getRtlCoef(), value = parseFloat(this.offset) + diff;
                 this.slideSet(this.handles[type], value);
             },
             onTranslated: () => {
@@ -24905,7 +25099,7 @@ class Range extends ModBaseListenCache {
         this.options.multiple && (this.tmpRatios = [...this.output.ratio]);
     }
     setAttrs() {
-        this.targetEl.setAttribute('axis', this.options.axis);
+        this.targetEl.setAttribute('flow', this.options.flow);
         classes(this.targetEl).add(this.options.classes);
         this.targetEl.toggleAttribute('multiple', this.options.multiple);
         this.targetEl.toggleAttribute('full', this.options.full);
@@ -25394,7 +25588,7 @@ const optDatetime = [
         },
     },
     {
-        attr: 'moc-selection',
+        attr: 'max-selection',
         prop: 'maxSelection',
         value: 100,
     },
@@ -25414,7 +25608,7 @@ const optDatetime = [
         value: '',
     },
     {
-        attr: 'moc-date',
+        attr: 'max-date',
         prop: 'maxDate',
         value: '',
     },
@@ -25500,12 +25694,17 @@ const optDatetime = [
     {
         attr: 'week-start',
         prop: 'weekStart',
-        value: 'monday',
+        value: 'ISO',
+    },
+    {
+        attr: 'head-format',
+        prop: 'headFormat',
+        value: 'ISO',
     },
     {
         attr: 'separator',
         prop: 'separator',
-        value: ',',
+        value: ';',
     },
     {
         attr: 'btn-sel',
@@ -25576,7 +25775,7 @@ const optDatetime = [
             display: 'popup',
             tplStr: `<div ${orca.alias}="label">{{this.label}}</div><div ${orca.alias}="content">{{this.content}}</div>`,
             tplEng: null,
-            heading: `YYYY年MM月DD日 WW`,
+            heading: `YYYY-MM-DD`,
             list: [],
         },
     },
@@ -25744,7 +25943,7 @@ class Datetime extends ModBaseListenCache {
         
         this.value = [];
         this.raw = [];
-        this.monthStr = repeatStr(`<li><span ${orca.alias}="content"><i ${orca.alias}="label">{{this.data[this.index-1]}}</i></span></li>`, 12, this.options.lang.month);
+        this.monthStr = repeatStr(`<li><span ${orca.alias}="content"><i ${orca.alias}="label">{{this.data[this.index-1]}}</i></span></li>`, 12, this.options.lang[orca.screen === 'xxs' ? 'month_s' : 'month']);
         super.listen({ name: 'constructed' });
         initial && this.init();
     }
@@ -25783,7 +25982,7 @@ class Datetime extends ModBaseListenCache {
             
         };
         this.setFeature();
-        this.format = trim(this.options.format || 'YYYY/MM/DD');
+        this.format = trim(this.options.format || 'YYYY-MM-DD');
         this.data.type = dateTools.getDateType(this.format);
         this.getDateTimeSpan();
         this.options.mode === 'range' && this.options.cols === 1 && (this.options.cols = 2);
@@ -25813,7 +26012,7 @@ class Datetime extends ModBaseListenCache {
         this.selectedsProxy.on('completed', (data) => {
             if (this.resultEl) {
                 let newContent = data.proxy.map((k) => {
-                    return { label: dateTools.fillFormat(k, this.format, this.options.lang), source: k };
+                    return { label: dateTools.fillFormat(k, { format: this.format, lang: this.options.lang, weekStart: this.options.weekStart }), source: k };
                 });
                 this.resultIns.update({
                     content: newContent,
@@ -25944,20 +26143,35 @@ class Datetime extends ModBaseListenCache {
         this.bubbleEl.setAttribute('footer', this.options.footer.enable);
         this.bubbleEl.toggleAttribute('lunar', this.options.lunar.enable);
     }
+    getHeadYearText(value) {
+        if (value <= 0) {
+            if (this.options.headFormat === 'USA') {
+                return Math.abs(value - 1) + ' ' + this.options.lang.BC;
+            }
+            else {
+                return (value < 0 ? '-' : '') + Math.abs(value).toString().padStart(4, '0') + this.getFactYear(value);
+            }
+        }
+        else if (value > 0 && value < 100) {
+            return this.options.lang.AD + ' ' + value;
+        }
+        else {
+            return value;
+        }
+    }
     createPanel(index, dateObj) {
         let curDate = dateTools.getDate(dateObj, this.data.type, this.options.lang), panelObj = {}, getWeek = () => {
-            let tpl = (this.options.weekStart === 'monday') ? `<li>{{this.data[this.index-1]}}</li>` : `<li>{{this.data[this.index===1?6:this.index-2]}}</li>`;
-            return repeatStr(tpl, 7, this.options.lang.week);
+            let tpl = (this.options.weekStart === 'ISO') ? `<li>{{this.data[this.index-1]}}</li>` : `<li>{{this.data[this.index===1?6:this.index-2]}}</li>`;
+            return repeatStr(tpl, 7, this.options.lang.day_s);
         };
         if (this.data.type.includes('date')) {
             curDate.setMonth(curDate.getMonth() + index);
             panelObj.month = curDate.getMonth();
             panelObj.year = curDate.getFullYear();
+            let monthName = this.options.headFormat === 'USA' ? this.options.lang.month_s[panelObj.month] : panelObj.month + 1, yearSpan = `<span ${orca.alias}="year"><i>${this.getHeadYearText(panelObj.year)}</i>${this.options.lang.suffix.Y}</span>`, monthSpan = `<span ${orca.alias}="month"><i>${monthName}</i>${this.options.lang.suffix.M}</span>`, headSpan = this.options.headFormat === 'USA' ? monthSpan + yearSpan : yearSpan + monthSpan;
             panelObj.panelEl = tplToEl(`
                         <li panel='${this.options.lunar.enable ? 'lunar' : 'date'}'>
-                            <div ${orca.alias}="head">
-                                <span ${orca.alias}="year"><i>${panelObj.year}</i>${this.options.lang.unit.Y}</span><span ${orca.alias}="month"><i>${panelObj.month + 1}</i>${this.options.lang.unit.M}</span>
-                            </div>
+                            <div ${orca.alias}="head">${headSpan}</div>
                             <div ${orca.alias}="body" days>
                                 <ul ${orca.alias}="column" class="${orca.prefix}reset  ${orca.prefix}grid ${orca.prefix}avg-7">
                                     ${getWeek()}
@@ -25979,7 +26193,7 @@ class Datetime extends ModBaseListenCache {
             panelObj.panelEl = tplToEl(`
                     <li panel='month'>
                         <div ${orca.alias}="head">
-                            <span ${orca.alias}="year"><i>${panelObj.year}</i>${this.options.lang.unit.Y}</span>
+                            <span ${orca.alias}="year"><i>${panelObj.year}</i></span>
                         </div>
                         <div body>
                             <ul ${orca.alias}="list" class="${orca.prefix}reset ${orca.prefix}grid ${orca.prefix}avg-3">${this.monthStr}</ul>
@@ -25998,7 +26212,7 @@ class Datetime extends ModBaseListenCache {
             panelObj.panelEl = tplToEl(`
                 <li panel='year'>
                     <div ${orca.alias}="head">
-                        <span ${orca.alias}="year"><i>${panelObj.year}</i>${this.options.lang.unit.Y}~<i>${panelObj.year + 17}</i>${this.options.lang.unit.Y}</span>
+                        <span ${orca.alias}="year"><i>${panelObj.year}</i> ~ <i>${panelObj.year + 17}</i></span>
                     </div>
                     <div ${orca.alias}="body">
                         <ul ${orca.alias}="list" class="${orca.prefix}reset ${orca.prefix}grid ${orca.prefix}avg-3"></ul>
@@ -26031,7 +26245,7 @@ class Datetime extends ModBaseListenCache {
             this.inSelectedDate(k) && !k.selected && this.selectedAttrToggle(k, true);
         });
         this.options.mode === 'range' && this.setRangeAttr(curItems);
-        let nowObj = dateTools.getDateObj(new Date(), this.data.type), nowItem = curItems.find((k) => JSON.stringify(k.value) == JSON.stringify(nowObj));
+        let nowObj = dateTools.getDateObj(new Date(), this.data.type, this.options.weekStart), nowItem = curItems.find((k) => dateTools.isSameDay(nowObj, k.value));
         nowItem && nowItem.wrapEl.setAttribute('now', '');
         this.afterCreatePanels();
         super.listen({ name: 'createPanels', cb });
@@ -26040,14 +26254,14 @@ class Datetime extends ModBaseListenCache {
     inSelectedDate(data) {
         let value = this.getDateVal(data, this.data.type);
         return this.selecteds.some((k) => {
-            let { hh, mm, ss, ...rest } = k;
-            return JSON.stringify(rest) == JSON.stringify(value);
+            let { H, m, s, ...rest } = k;
+            return dateTools.isSameDay(rest, value);
         });
     }
     showEvent(obj) {
-        this.headingEl.innerHTML = dateTools.fillFormat(obj.value, this.options.events.heading, this.options.lang);
+        this.headingEl.innerHTML = dateTools.fillFormat(obj.value, { format: this.options.events.heading, lang: this.options.lang, weekStart: this.options.weekStart });
         if (this.options.lunar.enable && this.options.lunar.handler) {
-            let lunarObj = { ...this.options.lunar.map }, lunarVal = this.options.lunar.handler(obj.value.YYYY, obj.value.MM + 1, obj.value.DD);
+            let lunarObj = { ...this.options.lunar.map }, lunarVal = this.options.lunar.handler(obj.value.Y, obj.value.M + 1, obj.value.D);
             for (let k in lunarObj) {
                 if (lunarObj.hasOwnProperty(k)) {
                     lunarObj[k] = lunarVal[lunarObj[k]];
@@ -26055,12 +26269,12 @@ class Datetime extends ModBaseListenCache {
             }
             this.lunarEl.innerHTML = super.getTplcont(lunarObj, this.options.lunar.tplStr, this.options.lunar.tplEng);
         }
-        let item = this.options.events.list.find((k) => dateTools.isSameDay(dateTools.getDateObj(k.date, 'date'), dateTools.getDateObj(obj.value, 'date')));
+        let item = this.options.events.list.find((k) => dateTools.isSameDay(dateTools.getDateObj(k.date, 'date', this.options.weekStart), dateTools.getDateObj(obj.value, 'date', this.options.weekStart)));
         this.eventEl.innerHTML = item && item.content ? super.getTplcont(item, this.options.events.tplStr, this.options.events.tplEng) : this.options.lang.noEvent;
     }
     inCurPanels(dateObj, curGrids) {
-        let type = this.data.type === 'datetime' ? 'date' : this.data.type, date = getDataType(dateObj) === 'Object' ? { ...dateObj } : dateObj, obj = dateTools.getDateObj(date, type), grids = curGrids || this.getCurGrids(), result;
-        result = grids.some((k) => JSON.stringify(k.value) == JSON.stringify(obj));
+        let type = this.data.type === 'datetime' ? 'date' : this.data.type, date = getDataType(dateObj) === 'Object' ? { ...dateObj } : dateObj, obj = dateTools.getDateObj(date, type, this.options.weekStart), grids = curGrids || this.getCurGrids(), result;
+        result = grids.some((k) => dateTools.isSameDay(obj, k.value));
         return result;
     }
     inputVal2Dates(toDate = true) {
@@ -26129,12 +26343,12 @@ class Datetime extends ModBaseListenCache {
         this.selecteds.splice(0, this.data.selecteds.length, ...selectedContent);
         this.raw = [...selectedContent];
         if (this.inputEl) {
-            let value = this.selecteds.map((k) => dateTools.fillFormat(k, this.format, this.options.lang)).join(this.separator);
+            let value = this.selecteds.map((k) => dateTools.fillFormat(k, { format: this.format, lang: this.options.lang, weekStart: this.options.weekStart })).join(this.separator);
             this.handleVal(value);
         }
     }
     stdTimeStr(data, type = 'object') {
-        let objArr = [], dataFn = (obj) => dateTools.getDateObj(obj, 'daytime');
+        let objArr = [], dataFn = (obj) => dateTools.getDateObj(obj, 'daytime', this.options.weekStart);
         if (Array.isArray(data)) {
             for (let k of data)
                 objArr.push(dataFn(k));
@@ -26142,16 +26356,16 @@ class Datetime extends ModBaseListenCache {
         else {
             objArr.push(dataFn(data));
         }
-        return (type === 'string') ? objArr.map((k) => `${dateTools.fillZero(k.hh)}:${dateTools.fillZero(k.mm)}:${dateTools.fillZero(k.ss)}`) : objArr;
+        return (type === 'string') ? objArr.map((k) => `${dateTools.fillZero(k.H)}:${dateTools.fillZero(k.m)}:${dateTools.fillZero(k.s)}`) : objArr;
     }
     handleTimeCont() {
         this.value = this.stdTimeStr(this.vals2Arr());
         if (this.options.mode === 'range') {
             if (this.value.length === 0) {
-                this.setDaytime([{ hh: 0, mm: 0, ss: 0 }, { hh: 0, mm: 0, ss: 0 }]);
+                this.setDaytime([{ H: 0, m: 0, s: 0 }, { H: 0, m: 0, s: 0 }]);
             }
             else if (this.value.length === 1) {
-                this.setDaytime([this.value[0], { hh: 0, mm: 0, ss: 0 }]);
+                this.setDaytime([this.value[0], { H: 0, m: 0, s: 0 }]);
             }
             else {
                 this.setDaytime(this.value);
@@ -26159,7 +26373,7 @@ class Datetime extends ModBaseListenCache {
         }
         else {
             if (this.value.length === 0) {
-                this.setDaytime({ hh: 0, mm: 0, ss: 0 });
+                this.setDaytime({ H: 0, m: 0, s: 0 });
             }
             else {
                 this.setDaytime(this.value[0]);
@@ -26172,33 +26386,7 @@ class Datetime extends ModBaseListenCache {
         }
     }
     dates2Objs(dates) {
-        let selectedContent = [];
-        if (this.data.type === 'year') {
-            selectedContent = dates.map((k) => {
-                return { YYYY: k.getFullYear() };
-            });
-        }
-        else if (this.data.type === 'month') {
-            selectedContent = dates.map((k) => {
-                return { YYYY: k.getFullYear(), MM: k.getMonth() };
-            });
-        }
-        else if (this.data.type === 'daytime') {
-            selectedContent = dates.map((k) => {
-                return { hh: k.getHours(), mm: k.getMinutes(), ss: k.getSeconds() };
-            });
-        }
-        else if (this.data.type === 'date') {
-            selectedContent = dates.map((k) => {
-                return { YYYY: k.getFullYear(), MM: k.getMonth(), DD: k.getDate() };
-            });
-        }
-        else if (this.data.type === 'datetime') {
-            selectedContent = dates.map((k) => {
-                return { YYYY: k.getFullYear(), MM: k.getMonth(), DD: k.getDate(), hh: k.getHours(), mm: k.getMinutes(), ss: k.getSeconds() };
-            });
-        }
-        return selectedContent;
+        return dates.map((k) => dateTools.getDateObj(k, this.data.type));
     }
     checkB4Show() {
         if (this.data.type !== 'daytime') {
@@ -26354,7 +26542,7 @@ class Datetime extends ModBaseListenCache {
             this.data.menu = this.options.menu;
             let fragment = document.createDocumentFragment();
             this.data.menu.forEach((k) => {
-                k.el = createEl('li', '', k.label);
+                k.el = createEl('li', { class: `${orca.prefix}datetime-${k.name || 'btn'}` }, `<span class="${orca.prefix}ell-2">${k.label}</span>`);
                 fragment.appendChild(k.el);
             });
             this.menuEl.appendChild(fragment);
@@ -26413,7 +26601,7 @@ class Datetime extends ModBaseListenCache {
         this.panelIdx = index || 0;
         for (let k = 0; k < 15; k++) {
             let year = start || start === 0 ? start + k : panel.year - 7 + k, obj = {
-                wrapEl: createEl('li', '', `<span ${orca.alias}="content"> <i ${orca.alias}="label">${year}${this.options.lang.unit.Y}</i></span> `),
+                wrapEl: createEl('li', '', `<span ${orca.alias}="content"> <i ${orca.alias}="label">${year}${this.getFactYear(year)}</i></span> `),
                 value: year,
             };
             obj.contEl = obj.wrapEl.querySelector(`[${orca.alias}="content"]`);
@@ -26462,11 +26650,11 @@ class Datetime extends ModBaseListenCache {
         if (this.destroyed)
             return;
         if (this.data.selecteds.length > 0) {
-            let dates = this.data.selecteds.map((k) => dateTools.getDateObj(dateTools.getOffsetDate(k, dateObj), this.data.type));
+            let dates = this.data.selecteds.map((k) => dateTools.getDateObj(dateTools.getOffsetDate(k, dateObj), this.data.type, this.options.weekStart));
             this.setVals(dates);
         }
         else {
-            this.data.startDate = dateTools.getOffsetDate(dateTools.getDateObj(new Date(), this.data.type), dateObj);
+            this.data.startDate = dateTools.getOffsetDate(dateTools.getDateObj(new Date(), this.data.type, this.options.weekStart), dateObj);
             this.setVals(this.data.startDate);
         }
         cb && cb.call(this);
@@ -26500,7 +26688,7 @@ class Datetime extends ModBaseListenCache {
                 return;
             let value;
             if (this.data.type.includes('time')) {
-                value = (data.hasOwnProperty('hh') && data.hasOwnProperty('mm') && data.hasOwnProperty('ss')) ? data : fillTime(obj.value);
+                value = (data.hasOwnProperty('H') && data.hasOwnProperty('m') && data.hasOwnProperty('s')) ? data : fillTime(obj.value);
             }
             else {
                 value = data.value || data;
@@ -26609,7 +26797,7 @@ class Datetime extends ModBaseListenCache {
             if (obj.hasOwnProperty('min')) {
                 result.min = {
                     Date: dateTools.getDate(obj.min, this.data.type, this.options.lang),
-                    Object: dateTools.getDateObj(obj.min, this.data.type, this.options.lang)
+                    Object: dateTools.getDateObj(obj.min, this.data.type, this.options.weekStart)
                 };
             }
             obj.hasOwnProperty('min') && (result.min = dateTools.getDate(obj.min, this.data.type, this.options.lang));
@@ -26617,7 +26805,7 @@ class Datetime extends ModBaseListenCache {
             if (obj.hasOwnProperty('max')) {
                 result.max = {
                     Date: dateTools.getDate(obj.max, this.data.type, this.options.lang),
-                    Object: dateTools.getDateObj(obj.max, this.data.type, this.options.lang)
+                    Object: dateTools.getDateObj(obj.max, this.data.type, this.options.weekStart)
                 };
             }
             return result;
@@ -26638,8 +26826,8 @@ class Datetime extends ModBaseListenCache {
             if (objType !== 'Object') {
                 return result;
             }
-            obj.hasOwnProperty('min') && (result.min = dateTools.getDateObj(obj.min, this.data.type, this.options.lang));
-            obj.hasOwnProperty('max') && (result.max = dateTools.getDateObj(obj.max, this.data.type, this.options.lang));
+            obj.hasOwnProperty('min') && (result.min = dateTools.getDateObj(obj.min, this.data.type, this.options.weekStart));
+            obj.hasOwnProperty('max') && (result.max = dateTools.getDateObj(obj.max, this.data.type, this.options.weekStart));
             return result;
         };
         if (spanType === 'Object') {
@@ -26653,12 +26841,12 @@ class Datetime extends ModBaseListenCache {
         let hander = (type = 'timespan') => {
             if (isEmpty(this.options[type]))
                 return [];
-            let spanType = getDataType(this.options[type]), dateProp = type === 'datespan' ? 'getDate' : 'getDateObj', getVal = (obj) => {
+            let spanType = getDataType(this.options[type]), getVal = (obj) => {
                 let objType = getDataType(obj), result = {};
                 if (objType !== 'Object')
                     return result;
-                obj.hasOwnProperty('min') && (result.min = dateTools[dateProp](obj.min, this.data.type, this.options.lang));
-                obj.hasOwnProperty('max') && (result.max = dateTools[dateProp](obj.max, this.data.type, this.options.lang));
+                obj.hasOwnProperty('min') && (result.min = type === 'datespan' ? dateTools.getDate(obj.min, this.data.type, this.options.lang) : dateTools.getDateObj(obj.min, this.data.type, this.options.weekStart));
+                obj.hasOwnProperty('max') && (result.max = type === 'datespan' ? dateTools.getDate(obj.max, this.data.type, this.options.lang) : dateTools.getDateObj(obj.max, this.data.type, this.options.weekStart));
                 return result;
             };
             if (spanType === 'Object') {
@@ -26717,7 +26905,7 @@ class Datetime extends ModBaseListenCache {
     getDateVal(dateObj, type) {
         let objType = getDataType(dateObj), value = {}, result;
         if (objType === 'String' || objType === 'Date') {
-            result = dateTools.getDateObj(dateObj, 'date');
+            result = dateTools.getDateObj(dateObj, 'date', this.options.weekStart);
         }
         else {
             if (objType === 'Object') {
@@ -26731,14 +26919,14 @@ class Datetime extends ModBaseListenCache {
             else if (objType === 'Number') {
                 value = this.data.selecteds[dateObj];
             }
-            result = dateTools.getDateObj(value, 'date');
+            result = dateTools.getDateObj(value, 'date', this.options.weekStart);
         }
         if (type === 'year') {
-            Reflect.deleteProperty(result, 'DD');
-            Reflect.deleteProperty(result, 'MM');
+            Reflect.deleteProperty(result, 'D');
+            Reflect.deleteProperty(result, 'M');
         }
         else if (type === 'month') {
-            Reflect.deleteProperty(result, 'DD');
+            Reflect.deleteProperty(result, 'D');
         }
         return result;
     }
@@ -26746,7 +26934,7 @@ class Datetime extends ModBaseListenCache {
         return this.data.panels.map((k) => k.list).flat(Infinity).filter((k) => !k.exceed);
     }
     findFromPanels(dateObj, grid, grids) {
-        let value = this.getDateVal(dateObj, this.data.type), curItems = grids || this.getCurGrids(), curItem = grid || curItems.find((k) => JSON.stringify(k.value) == JSON.stringify(value));
+        let value = this.getDateVal(dateObj, this.data.type), curItems = grids || this.getCurGrids(), curItem = grid || curItems.find((k) => dateTools.isSameDay(k.value, value));
         return { target: curItem, list: curItems };
     }
     afterCreatePanels() {
@@ -26761,7 +26949,7 @@ class Datetime extends ModBaseListenCache {
                             console.warn(`The selected items have exceeded the ${this.options.maxSelection} limit!`);
                             return;
                         }
-                        let curItem = curGrids.find((i) => JSON.stringify(i.value) == JSON.stringify(k.value));
+                        let curItem = curGrids.find((i) => dateTools.isSameDay(i.value, k.value));
                         if (this.options.mode === 'multiple') {
                             if (curItem) {
                                 curItem.selected ? this.deselect(k, curItem, curGrids) : this.select(k, curItem, curGrids);
@@ -26882,7 +27070,7 @@ class Datetime extends ModBaseListenCache {
                 this.prevYearEl.onclick = () => {
                     let years = (this.data.type === 'year') ? -18 * this.options.cols * this.options.rows :
                         (this.data.type === 'month') ? -this.options.cols * this.options.rows : -1;
-                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { YYYY: years }), true);
+                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { Y: years }), true);
                     this.data.year.panelEl && this.createYearList(this.data.panels[this.panelIdx], null, this.panelIdx);
                 };
             }
@@ -26890,16 +27078,16 @@ class Datetime extends ModBaseListenCache {
                 this.nextYearEl.onclick = () => {
                     let years = (this.data.type === 'year') ? 18 * this.options.cols * this.options.rows :
                         (this.data.type === 'month') ? this.options.cols * this.options.rows : 1;
-                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { YYYY: years }), true);
+                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { Y: years }), true);
                     this.data.year.panelEl && this.createYearList(this.data.panels[this.panelIdx], null, this.panelIdx);
                 };
             }
             if (this.data.type.includes('date')) {
                 this.prevMonthEl.onclick = () => {
-                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { MM: -1 }), true);
+                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { M: -1 }), true);
                 };
                 this.nextMonthEl.onclick = () => {
-                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { MM: 1 }), true);
+                    this.createPanels(dateTools.getOffsetDate(this.data.startDate, { M: 1 }), true);
                 };
             }
             if (this.yearSearchEl) {
@@ -26913,10 +27101,10 @@ class Datetime extends ModBaseListenCache {
             if (this.timePanelsEl) {
                 if (this.options.mode === 'range') {
                     if (this.data.selecteds.length === 0) {
-                        this.setDaytime([{ hh: 0, mm: 0, ss: 0 }, { hh: 0, mm: 0, ss: 0 }]);
+                        this.setDaytime([{ H: 0, m: 0, s: 0 }, { H: 0, m: 0, s: 0 }]);
                     }
                     else if (this.data.selecteds.length === 1) {
-                        this.setDaytime([this.data.selecteds[0], { hh: 0, mm: 0, ss: 0 }]);
+                        this.setDaytime([this.data.selecteds[0], { H: 0, m: 0, s: 0 }]);
                     }
                     else {
                         this.setDaytime(this.data.selecteds);
@@ -26924,7 +27112,7 @@ class Datetime extends ModBaseListenCache {
                 }
                 else {
                     if (this.data.selecteds.length === 0) {
-                        this.setDaytime({ hh: 0, mm: 0, ss: 0 });
+                        this.setDaytime({ H: 0, m: 0, s: 0 });
                     }
                     else {
                         this.setDaytime(this.data.selecteds[0]);
@@ -26997,7 +27185,7 @@ class Datetime extends ModBaseListenCache {
             this.data.startDate.setFullYear(~~value);
             this.createPanels();
             isHide && hide({ el: this.data.year.panelEl });
-            this.data.type === 'year' && this.select({ YYYY: ~~value });
+            this.data.type === 'year' && this.select({ Y: ~~value });
         }
         else {
             new Message({
@@ -27011,8 +27199,8 @@ class Datetime extends ModBaseListenCache {
         elem.innerHTML = '';
         let curDate = dateTools.getDate(dateObj, this.data.type, this.options.lang);
         curDate.setDate(1);
-        let list = [], startIndex, curMonth = curDate.getMonth(), curYear = curDate.getFullYear(), monthDays = dateTools.getCurDays(curDate), preDate = dateTools.getOffsetDate(curDate, { MM: -1 }), prevMonth = preDate.getMonth(), prevYear = preDate.getFullYear(), nextDate = dateTools.getOffsetDate(curDate, { MM: 1 }), nextMonth = nextDate.getMonth(), nextYear = nextDate.getFullYear(), fragment = document.createDocumentFragment();
-        if (this.options.weekStart === 'monday') {
+        let list = [], startIndex, curMonth = curDate.getMonth(), curYear = curDate.getFullYear(), monthDays = dateTools.getCurDays(curDate), preDate = dateTools.getOffsetDate(curDate, { M: -1 }), prevMonth = preDate.getMonth(), prevYear = preDate.getFullYear(), nextDate = dateTools.getOffsetDate(curDate, { M: 1 }), nextMonth = nextDate.getMonth(), nextYear = nextDate.getFullYear(), fragment = document.createDocumentFragment();
+        if (this.options.weekStart === 'ISO') {
             startIndex = (curDate.getDay() === 0) ? 7 : curDate.getDay();
         }
         else {
@@ -27028,27 +27216,27 @@ class Datetime extends ModBaseListenCache {
             dayObj.wrapEl.appendChild(dayObj.contEl);
             dayObj.contEl.appendChild(dayObj.labelEl);
             if (gridIndex < startIndex) {
-                label = dateTools.getCurDays({ YYYY: prevYear, MM: prevMonth }) - startIndex + gridIndex + 1;
-                dayObj.value = { YYYY: prevYear, MM: prevMonth, DD: label };
+                label = dateTools.getCurDays({ Y: prevYear, M: prevMonth }) - startIndex + gridIndex + 1;
+                dayObj.value = { Y: prevYear, M: prevMonth, D: label };
                 dayObj.exceed = true;
                 dayObj.wrapEl.setAttribute('exceed', '');
             }
             else if (gridIndex >= startIndex + monthDays) {
                 label = gridIndex - startIndex - monthDays + 1;
-                dayObj.value = { YYYY: nextYear, MM: nextMonth, DD: label };
+                dayObj.value = { Y: nextYear, M: nextMonth, D: label };
                 dayObj.exceed = true;
                 dayObj.wrapEl.setAttribute('exceed', '');
             }
             else {
                 label = day;
-                dayObj.value = { YYYY: curYear, MM: curMonth, DD: label };
+                dayObj.value = { Y: curYear, M: curMonth, D: label };
                 day++;
             }
             dayObj.label = label;
             dayObj.labelEl.textContent = label;
             this.setDatespanDisabled(dayObj);
             if (this.options.lunar && this.options.lunar.handler) {
-                let lunarObj = this.options.lunar.handler(dayObj.value.YYYY, dayObj.value.MM + 1, dayObj.value.DD);
+                let lunarObj = this.options.lunar.handler(dayObj.value.Y, dayObj.value.M + 1, dayObj.value.D);
                 if (lunarObj && lunarObj != -1) {
                     let lunarContent = '', attr = '';
                     for (let v of this.options.lunar.arrange) {
@@ -27069,7 +27257,7 @@ class Datetime extends ModBaseListenCache {
                 }
                 if (this.options.lunar.tags.length > 0) {
                     for (let v of this.options.lunar.tags) {
-                        let date = dateTools.getDateObj(v.date, this.data.type), tagEl = createEl('s', v.attr ? { [orca.alias]: v.attr } : {}, v.content);
+                        let date = dateTools.getDateObj(v.date, this.data.type, this.options.weekStart), tagEl = createEl('s', v.attr ? { [orca.alias]: v.attr } : {}, v.content);
                         if (dateTools.isSameDay(date, dayObj.value)) {
                             dayObj.contEl.appendChild(tagEl);
                             break;
@@ -27079,7 +27267,7 @@ class Datetime extends ModBaseListenCache {
             }
             if (this.options.events.enable) {
                 for (let v of this.options.events.list) {
-                    let date = dateTools.getDateObj(v.date, this.data.type);
+                    let date = dateTools.getDateObj(v.date, this.data.type, this.options.weekStart);
                     if (dateTools.isSameDay(date, dayObj.value)) {
                         dayObj.busy = true;
                         dayObj.wrapEl.setAttribute('busy', '');
@@ -27100,19 +27288,22 @@ class Datetime extends ModBaseListenCache {
             let obj = {
                 wrapEl: k,
                 contEl: k.querySelector(`[${orca.alias}="content"]`),
-                value: { YYYY: dateObj.getFullYear(), MM: i }
+                value: { Y: dateObj.getFullYear(), M: i }
             };
             this.setDatespanDisabled(obj);
             list.push(obj);
         });
         return list;
     }
+    getFactYear(year) {
+        return year <= 0 ? ` (${Math.abs(year - 1)} BC)` : '';
+    }
     createPanelYearList(elem, dateObj) {
         let list = [], fragment = document.createDocumentFragment();
         for (let k = 0; k < 18; k++) {
-            let year = dateObj.getFullYear() + k, wrap = createEl('li', '', `<span ${orca.alias}="content"><i ${orca.alias}="label">${year}${this.options.lang.unit.Y}</i></span>`), obj = {
+            let year = dateObj.getFullYear() + k, wrap = createEl('li', '', `<span ${orca.alias}="content"><i ${orca.alias}="label">${year}${this.getFactYear(year)}</i></span>`), obj = {
                 wrapEl: wrap,
-                value: { YYYY: year },
+                value: { Y: year },
             };
             obj.contEl = obj.wrapEl.querySelector(`[${orca.alias}="content"]`);
             this.setDatespanDisabled(obj);
@@ -27207,9 +27398,9 @@ class Datetime extends ModBaseListenCache {
                 nowEl: k.querySelector(`[${orca.alias}="now"]`),
                 closeEl: k.querySelector(`[${orca.alias}="close"]`),
                 value: {},
-                hh: this.getTimeListArr(liArr[0], 'hh'),
-                mm: this.getTimeListArr(liArr[1], 'mm'),
-                ss: this.getTimeListArr(liArr[2], 'ss'),
+                H: this.getTimeListArr(liArr[0], 'H'),
+                m: this.getTimeListArr(liArr[1], 'm'),
+                s: this.getTimeListArr(liArr[2], 's'),
             };
             this.data.daytime.push(panelObj);
         });
@@ -27222,38 +27413,38 @@ class Datetime extends ModBaseListenCache {
                 this.raw[n] && this.setDaytime(this.raw[n], n, true);
             };
             k.resetEl.onclick = () => {
-                this.setDaytime({ hh: 0, mm: 0, ss: 0 }, n, true);
+                this.setDaytime({ H: 0, m: 0, s: 0 }, n, true);
             };
             k.nowEl.onclick = () => {
-                let time = dateTools.getDateObj(new Date(), this.data.type);
-                this.setDaytime({ hh: time.hh, mm: time.mm, ss: time.ss }, n, true);
+                let time = dateTools.getDateObj(new Date(), this.data.type, this.options.weekStart);
+                this.setDaytime({ H: time.H, m: time.m, s: time.s }, n, true);
             };
-            k.hh.forEach((i) => {
+            k.H.forEach((i) => {
                 i.contEl.onclick = () => {
                     if (i.selected || i.disabled)
                         return;
-                    this.toggleTimeList(i, k.hh);
-                    k.value.hh = i.value;
+                    this.toggleTimeList(i, k.H);
+                    k.value.H = i.value;
                     this.timeToUpdate(k, n, true);
                     super.listen({ name: 'updatedTime', params: [i] });
                 };
             });
-            k.mm.forEach((i) => {
+            k.m.forEach((i) => {
                 i.contEl.onclick = () => {
                     if (i.selected || i.disabled)
                         return;
-                    this.toggleTimeList(i, k.mm);
-                    k.value.mm = i.value;
+                    this.toggleTimeList(i, k.m);
+                    k.value.m = i.value;
                     this.timeToUpdate(k, n, true);
                     super.listen({ name: 'updatedTime', params: [i] });
                 };
             });
-            k.ss.forEach((i) => {
+            k.s.forEach((i) => {
                 i.contEl.onclick = () => {
                     if (i.selected || i.disabled)
                         return;
-                    this.toggleTimeList(i, k.ss);
-                    k.value.ss = i.value;
+                    this.toggleTimeList(i, k.s);
+                    k.value.s = i.value;
                     this.timeToUpdate(k, n, true);
                     super.listen({ name: 'updatedTime', params: [i] });
                 };
@@ -27271,7 +27462,7 @@ class Datetime extends ModBaseListenCache {
         if (!this.data.type.includes('time') || !this.daytimeBtnEl)
             return;
         let timeStr = this.data.daytime.map((k) => {
-            return isEmpty(k.value) ? this.options.lang.daytime.select : `${dateTools.fillZero(k.value.hh)}:${dateTools.fillZero(k.value.mm)}:${dateTools.fillZero(k.value.ss)}`;
+            return isEmpty(k.value) ? this.options.lang.daytime.select : `${dateTools.fillZero(k.value.H)}:${dateTools.fillZero(k.value.m)}:${dateTools.fillZero(k.value.s)}`;
         });
         this.daytimeBtnEl.setAttribute('label', timeStr.join('~'));
     }
@@ -27281,12 +27472,12 @@ class Datetime extends ModBaseListenCache {
         let type = getDataType(timeObj);
         let setFun = (k, i) => {
             let time = (typeof k === 'string') ? dateTools.getTimeObj(timeObj) : k;
-            this.data.daytime[i].value.hh = time.hh;
-            this.toggleTimeList(this.data.daytime[i].hh[time.hh], this.data.daytime[i].hh);
-            this.data.daytime[i].value.mm = time.mm;
-            this.toggleTimeList(this.data.daytime[i].mm[time.mm], this.data.daytime[i].mm);
-            this.data.daytime[i].value.ss = time.ss;
-            this.toggleTimeList(this.data.daytime[i].ss[time.ss], this.data.daytime[i].ss);
+            this.data.daytime[i].value.H = time.H;
+            this.toggleTimeList(this.data.daytime[i].H[time.H], this.data.daytime[i].H);
+            this.data.daytime[i].value.m = time.m;
+            this.toggleTimeList(this.data.daytime[i].m[time.m], this.data.daytime[i].m);
+            this.data.daytime[i].value.s = time.s;
+            this.toggleTimeList(this.data.daytime[i].s[time.s], this.data.daytime[i].s);
             update && this.data.type === 'datetime' ? this.timeToUpdate(this.data.daytime[i], i) : null;
         };
         if (type === 'Array') {
@@ -27333,7 +27524,7 @@ class Datetime extends ModBaseListenCache {
                     result = '';
                 }
                 else if (this.data.selecteds.length === 2) {
-                    let startStr = dateTools.fillFormat(this.data.selecteds[0], this.format, this.options.lang), endStr = dateTools.fillFormat(this.data.selecteds[1], this.format, this.options.lang);
+                    let startStr = dateTools.fillFormat(this.data.selecteds[0], { format: this.format, lang: this.options.lang, weekStart: this.options.weekStart }), endStr = dateTools.fillFormat(this.data.selecteds[1], { format: this.format, lang: this.options.lang, weekStart: this.options.weekStart });
                     result = `${startStr}${this.options.lang.range.hyphen}${endStr} `;
                 }
                 else {
@@ -27346,7 +27537,9 @@ class Datetime extends ModBaseListenCache {
                 }
             }
             else {
-                result = this.data.selecteds.map((k) => dateTools.fillFormat(k, this.format, this.options.lang)).join(this.options.separator);
+                result = this.data.selecteds
+                    .map((k) => dateTools.fillFormat(k, { format: this.format, lang: this.options.lang, weekStart: this.options.weekStart }))
+                    .join(this.options.separator);
                 if (this.options.required && !result) {
                     new Message({
                         status: 'error',
@@ -27358,7 +27551,7 @@ class Datetime extends ModBaseListenCache {
             }
         }
         else {
-            result = this.data.daytime.map((k) => dateTools.fillFormat(k.value, this.format, this.options.lang)).join(this.separator);
+            result = this.data.daytime.map((k) => dateTools.fillFormat(k.value, { format: this.format, lang: this.options.lang, weekStart: this.options.weekStart })).join(this.separator);
         }
         await this.handleVal(result);
         if (hide && this.bubbleIns) {
@@ -27389,7 +27582,7 @@ class Datetime extends ModBaseListenCache {
     setNow(hide = this.options.nowHide) {
         if (this.destroyed)
             return;
-        let date = dateTools.getDateObj(new Date(), this.data.type);
+        let date = dateTools.getDateObj(new Date(), this.data.type, this.options.weekStart);
         if (this.data.type === 'daytime') {
             this.setDaytime(date);
         }
@@ -27445,7 +27638,7 @@ class Datetime extends ModBaseListenCache {
             return [];
         }
         else {
-            return arr.map((k) => dateTools.getDateObj(k, this.data.type));
+            return arr.map((k) => dateTools.getDateObj(k, this.data.type, this.options.weekStart));
         }
     }
     getVals() {
@@ -27489,7 +27682,7 @@ class Datetime extends ModBaseListenCache {
     setRange(data, cb) {
         if (isEmpty(data) || data.length !== 2 || this.destroyed)
             return;
-        let objArr = data.map((k) => dateTools.getDateObj(k, this.data.type)), curGrids = this.getCurGrids();
+        let objArr = data.map((k) => dateTools.getDateObj(k, this.data.type, this.options.weekStart)), curGrids = this.getCurGrids();
         dateTools.sort(objArr);
         this.selecteds.splice(0, this.selecteds.length, ...objArr);
         if (!this.inCurPanels(objArr[0], curGrids) && !this.inCurPanels(objArr[1], curGrids)) {
@@ -27533,7 +27726,7 @@ class Datetime extends ModBaseListenCache {
         }
         if (resetTime && this.timePanelsEl) {
             for (let k in this.data.daytime) {
-                this.setDaytime({ hh: 0, mm: 0, ss: 0 }, k);
+                this.setDaytime({ H: 0, m: 0, s: 0 }, k);
             }
         }
         super.listen({ name: 'cleared', cb, });
@@ -31451,6 +31644,7 @@ class Upload extends ModBaseListenCache {
     infoEl;
     listEl;
     tableEl;
+    scrollerEl;
     theadEl;
     fileEl;
     inputEl;
@@ -31567,7 +31761,8 @@ class Upload extends ModBaseListenCache {
         }
         this.listEl = createEl(this.options.type === 'table' ? 'table' : 'ul', { class: `${this.options.type !== 'table' ? classes : ''} ${orca.prefix}upload-list` });
         if (this.options.type === 'table') {
-            this.tableEl = createEl('table');
+            this.tableEl = createEl('table', { nowrap: '' });
+            this.scrollerEl = createEl('div', { class: `${orca.prefix}scroller` }, this.tableEl);
             this.listEl = createEl('tbody', { class: `${orca.prefix}upload-list` });
             if (this.options.table.header) {
                 this.theadEl = createEl('thead', {}, this.options.lang.thead.map((k) => `<th>${k}</th>`).join(''));
@@ -31644,7 +31839,14 @@ class Upload extends ModBaseListenCache {
         return createEl(node, Object.assign({ [orca.alias]: ['picture', 'gallery'].includes(type) ? 'choose' : type }, type !== 'gallery' ? { tabindex: 0 } : {}, this.options[type + 'Btn'].attrs), `${iconStr}${textStr}`);
     }
     createBtn(type) {
-        return createEl('oc-btn', Object.assign({ [orca.alias]: type, size: this.options.size, tabindex: 0, icon: this.options[type + 'Btn'].icon, label: this.options.lang.button[type] }, this.options[type + 'Btn'].attrs));
+        let obj = Object.assign({
+            [orca.alias]: type,
+            tabindex: 0,
+            icon: this.options[type + 'Btn'].icon,
+            label: this.options.lang.button[type]
+        }, this.options[type + 'Btn'].attrs);
+        this.options.size && (obj.size = this.options.size);
+        return createEl('oc-btn', obj);
     }
     createInput(hasText = true, hasFile = true) {
         if (hasText) {
@@ -31693,7 +31895,7 @@ class Upload extends ModBaseListenCache {
         }
         !this.fileEl.multiple && (this.options.limit.min = 0, this.options.limit.max = 1);
         this.targetEl.append(this.inputEl, this.fileEl);
-        this.targetEl.appendChild(this.options.type === 'table' ? this.tableEl : this.listEl);
+        this.targetEl.appendChild(this.options.type === 'table' ? this.scrollerEl : this.listEl);
         this.footEl = createEl('div', { class: `${orca.prefix}upload-foot` }, this.infoEl);
         if (this.options.status) {
             this.targetEl.setAttribute('status', this.options.status);
@@ -31799,8 +32001,8 @@ class Upload extends ModBaseListenCache {
         this.options.type ? this.targetEl.setAttribute('type', this.options.type) : this.targetEl.removeAttribute('type');
         this.targetEl.toggleAttribute('pastable', this.options.pastable);
         this.targetEl.toggleAttribute('inert', this.options.disabled);
+        this.options.size ? this.targetEl.setAttribute('size', this.options.size) : this.targetEl.removeAttribute('size');
         this.options.feature ? this.targetEl.setAttribute('feature', this.options.feature) : this.targetEl.removeAttribute('feature');
-        this.targetEl.setAttribute('size', this.options.size);
         this.updateInsProg('ready');
     }
     createCtrlv() {
@@ -31846,7 +32048,7 @@ class Upload extends ModBaseListenCache {
             <a ${orca.alias}="download" href="###" class="${orca.prefix}icon-download"></a>
             <i ${orca.alias}="remove" class="${orca.prefix}icon-trash"></i>
         </div>
-        <oc-progress ${orca.alias}="progress" thk="xs" size="sm" type="circle"></oc-progress>
+        <oc-progress ${orca.alias}="progress" size="xs" width="sm" type="circle"></oc-progress>
         <i ${orca.alias}="state"></i>
         <i ${orca.alias}="sign" class="${orca.prefix}icon-check"></i>
         <div ${orca.alias}="message">${passed ? msg : ''}</div>
@@ -31855,7 +32057,7 @@ class Upload extends ModBaseListenCache {
                     <a href="###" ${orca.alias}="title">${name}</a>
                     ${this.options.type === 'bullet' ? '<div ' + orca.alias + '="size">' + convertByte({ val: size }).str + '</div>' : ''}
                 </div>
-                <oc-progress ${orca.alias}="progress" label="false" thk="xs"></oc-progress>
+                <oc-progress ${orca.alias}="progress" label="false" size="xs"></oc-progress>
                 <i ${orca.alias}="message">${passed ? msg : ''}</i>
                 <i ${orca.alias}="percent"></i>
                 <i ${orca.alias}="state"></i>
@@ -31903,7 +32105,7 @@ class Upload extends ModBaseListenCache {
                         <td><div class="${orca.prefix}upload-file"></div></td>
                         <td><div class="${orca.prefix}upload-info"><a href="###" ${orca.alias}="title">${name}</a></div></td>
                         <td>${convertByte({ val: size }).str}</td>
-                        <td><oc-progress ${orca.alias}="progress" thk="sm"></oc-progress></td>
+                        <td><oc-progress ${orca.alias}="progress" size="sm"></oc-progress></td>
                         <td><i ${orca.alias}="message">${passed ? msg : ''}</i></td>
                         <td><span ${orca.alias}="state">${passed ? this.options.lang.progress.passed : this.options.lang.progress.notPassed}</span></td>
                         <td>${btns}</td>
@@ -33563,8 +33765,26 @@ class EllipsisElem extends HTMLElement {
 }
 
 class FieldElem extends HTMLElement {
+    inputs;
     constructor() {
         super();
+        this[orca.compSign] = true;
+        let names = ['input', 'number', 'range', 'select', 'btn', 'file', 'textarea', 'upload', 'datetime', 'rate', 'radio', 'radios', 'checkbox', 'checkboxes', 'search', 'fields', 'editor', 'progress', 'color', 'wheel']
+            .map((k) => `.${orca.prefix}field-input > oc-${k}`).join(',');
+        this.inputs = getEls(`.${orca.prefix}field-input > [${orca.compSign}],${names}`, this);
+    }
+    static get observedAttributes() {
+        return ['size'];
+    }
+    attributeChangedCallback(name, oldVal, newVal) {
+        if (name === 'size' && this.inputs.length) {
+            for (let k of this.inputs) {
+                newVal ? k.setAttribute('size', newVal) : k.removeAttribute('size');
+            }
+        }
+    }
+    connectedCallback() {
+        this.setAttribute(orca.compSign, '');
     }
 }
 
@@ -36125,7 +36345,7 @@ class RangeElem extends CompBaseCommFieldMixin {
         super();
         this.type = 'range-comp';
     }
-    static custAttrs = ['name', 'step', 'max', 'min', 'axis', 'size', 'classes', 'separator', 'hyphen', 'fence', 'button', 'ruler', 'result', 'lang'];
+    static custAttrs = ['name', 'value', 'step', 'max', 'min', 'flow', 'size', 'classes', 'separator', 'hyphen', 'fence', 'button', 'ruler', 'result', 'lang'];
     static boolAttrs = ['async', 'disabled', 'full', 'limit-show', 'tip-show', 'multiple', 'locked', 'rtl'];
     
     attributeChangedCallback(name, oldVal, newVal) {
@@ -37278,11 +37498,13 @@ class SearchElem extends CompBaseCommField {
     meanEl;
     type;
     fieldsEl;
+    a;
     constructor() {
         super();
         this.type = 'search-comp';
         this.getRawData();
         this.fieldsEl = getEl(':scope > OC-FIELDS', this);
+        this.a = this.fieldsEl;
         this.fillWrap(this.propsProxy);
     }
     static dependencies = [{ tag: 'oc-fields', comp: FieldsElem }];
@@ -37318,13 +37540,11 @@ class SearchElem extends CompBaseCommField {
         shape: this.changedShape,
     };
     changedFull(opt) {
-        this.fieldsEl = this.querySelector('oc-fields');
         if (!this.fieldsEl)
             return;
         this.fieldsEl.toggleAttribute('full', !!opt.newVal);
     }
     changedSize(opt) {
-        this.fieldsEl = this.querySelector('oc-fields');
         if (!this.fieldsEl)
             return;
         if (opt.newVal) {
@@ -37335,8 +37555,7 @@ class SearchElem extends CompBaseCommField {
         }
     }
     changedNotable(opt) {
-        this.fieldsEl = this.querySelector('oc-fields');
-        if (!this.fieldsEl.btnEl)
+        if (!this.fieldsEl?.btnEl)
             return;
         if (this.propsProxy.notable) {
             this.fieldsEl.btnEl.setAttribute('theme', 'prim');
@@ -37346,8 +37565,7 @@ class SearchElem extends CompBaseCommField {
         }
     }
     changedShape(opt) {
-        this.fieldsEl = this.querySelector('oc-fields');
-        if (!this.fieldsEl.btnEl)
+        if (!this.fieldsEl?.btnEl)
             return;
         if (opt.newVal) {
             this.fieldsEl.setAttribute('shape', opt.newVal);
@@ -37407,7 +37625,7 @@ class CalloutElem extends CompBaseComm {
         this.captEl = createEl('div', { [orca.alias]: 'title' });
         this.contEl = createEl('div', { [orca.alias]: 'content' }, this.propsProxy.content);
         this.bodyEl = createEl('div', { [orca.alias]: 'body' }, this.contEl);
-        this.progEl = createEl('oc-progress', { [orca.alias]: 'prog', linecap: 'square', thk: 'xs', theme: 'warn', value: '100', label: false });
+        this.progEl = createEl('oc-progress', { [orca.alias]: 'prog', linecap: 'square', size: 'xs', theme: 'warn', value: '100', label: false });
         this.wrapEl.append(this.bodyEl, this.toolsEl);
     }
     render() {
@@ -38647,4 +38865,4 @@ var modules = {
     init,
 };
 
-export { Accordion, AccordionElem, AlarmElem, AnchorsElem, Autocomplete, AvatarElem, BadgeElem, BtnElem, BuoyElem, CalloutElem, CategoryElem, CheckboxElem, CheckboxesElem, CompBase, CompBaseComm, CompBaseCommField, CompBaseCommFieldMixin, Datetime, DatetimeElem, DeformElem, Dialog, DividerElem, Dodge, Drag, Drawer, Dropdown, Editor, EditorElem, FieldsElem, FileElem, FlagElem, Flip, FormatElem, Gesture, GoodElem, Hover, IconElem, Infinite, InputElem, Lazy, LineElem, Masonry, Menu, MenuElem, Message, ModBase, ModBaseListen, ModBaseListenCache, ModBaseListenCacheBubble, ModBaseListenCacheNest, More, MoreElem, NumberElem, Observe, Pagination, PaginationElem, Panel, PillElem, Popup, Position, Progress, ProgressElem, RadioElem, RadiosElem, Range, RangeElem, Rate, RateElem, ResultElem, Retrieval, Router, Scroll, SearchElem, Select, SelectElem, SkeletonElem, Spy, StatsElem, StatusElem, StepElem, Swipe, Tab, Tags, TextareaElem, Tooltip, Tree, TreeElem, TwilightElem, Upload, UploadElem, Valid, Virtualize, addStyle, addStyles, ajax, alert, allToEls, appendEls, arrSearch, arrSort, attrJoinVal, attrToJson, attrValBool, augment, breakpoints, bulletTools, capStart, clampVal, classes, clearRegx, combineArr, config, confirm, contains, convertByte, createBtns, createComp, createEl, createEvt, createFooter, createModule, createTools, curveFns, dateTools, debounce, decompTask, deepClone, deepEqual, deepMerge, modules as default, delay, dl2Tree, ease, easeHeight, elState, elsSort, eventMap, events, extend, fadeIn, fadeOut, fadeToggle, fieldTools, fieldTypes, fileTools, filterPrims, findItem, findItems, formTools, getArrMap, getAttrArr, getAttrBool, getAutoDur, getBetweenEls, getClasses, getClientObj, getComputedVar, getContent, getDataType, getEl, getElSpace, getEls, getEvtClient, getEvtTarget, getExpiration, getHeights, getHypotenuse, getIntArr, getLast, getNestProp, getPlaces, getRectPoints, getRtl, getScreenSize, getScrollObj, getSelectorType, getStrFromTpl, getUTCTimestamp, getValsFromAttrs, getWidths, hide, icons, includes, increaseId, init, instance, isDateStr, isEmpty, isNull, isOutside, isProxy, isScrollUp, isSubset, keyCond, moveItem, notice, offset, orca, paramToJson, parseStr, parseUrlArr, plan, preventDft, privacy, promiseRaf, prompt, propsMap, purifyHtml, regComp, regExps, removeItem, removeStyle, removeStyles, renderTpl, repeatStr, replaceFrag, requireTypes, scrollTo, select2Tree, setAttr, setAttrs, setContent, setRtl, setSingleSel, show, sliceFrags, sliceStrEnd, slideDown, slideToggle, slideUp, splice, splitNum, spreadBool, startUpper, stdParam, storage, storeNode, strToJson, style, support, theme, throttle, toLocalTime, toNumber, toPixel, toggle, tplToEl, tplToEls, transformTools, treeTools, trim, ul2Tree, unique, valToArr, validTools };
+export { Accordion, AccordionElem, AlarmElem, AnchorsElem, Autocomplete, AvatarElem, BadgeElem, BtnElem, BulletElem, BuoyElem, CalloutElem, CardElem, CategoryElem, CheckboxElem, CheckboxesElem, CommentElem, CompBase, CompBaseComm, CompBaseCommField, CompBaseCommFieldMixin, CrumbElem, Datetime, DatetimeElem, DeformElem, Dialog, DividerElem, Dodge, Drag, Drawer, Dropdown, Editor, EditorElem, EllipsisElem, FieldElem, FieldsElem, FileElem, FilterElem, FlagElem, Flip, FooterElem, FormatElem, Gesture, GoodElem, GradeElem, HeaderElem, Hover, IconElem, Infinite, InputElem, Lazy, LineElem, Masonry, Menu, MenuElem, Message, ModBase, ModBaseListen, ModBaseListenCache, ModBaseListenCacheBubble, ModBaseListenCacheNest, More, MoreElem, NumberElem, Observe, Pagination, PaginationElem, Panel, PillElem, Popup, Position, PostElem, Progress, ProgressElem, RadioElem, RadiosElem, Range, RangeElem, Rate, RateElem, ResultElem, Retrieval, Router, Scroll, SearchElem, Select, SelectElem, SkeletonElem, SpinElem, Spy, StatsElem, StatusElem, StepElem, Swipe, Tab, Tags, TextareaElem, Tooltip, Tree, TreeElem, TwilightElem, Upload, UploadElem, Valid, Virtualize, WallElem, addStyle, addStyles, ajax, alert, allToEls, appendEls, arrSearch, arrSort, attrJoinVal, attrToJson, attrValBool, augment, breakpoints, bulletTools, capStart, clampVal, classes, clearRegx, combineArr, config, confirm, contains, convertByte, createBtns, createComp, createEl, createEvt, createFooter, createModule, createTools, curveFns, dateTools, debounce, decompTask, deepClone, deepEqual, deepMerge, modules as default, delay, dl2Tree, ease, easeHeight, elState, elsSort, eventMap, events, extend, fadeIn, fadeOut, fadeToggle, fieldTools, fieldTypes, fileTools, filterPrims, findItem, findItems, formTools, getArrMap, getAttrArr, getAttrBool, getAutoDur, getBetweenEls, getClasses, getClientObj, getComputedVar, getContent, getDataType, getEl, getElSpace, getEls, getEvtClient, getEvtTarget, getExpiration, getHeights, getHypotenuse, getIntArr, getLast, getNestProp, getPlaces, getRectPoints, getRtl, getScreenSize, getScrollObj, getSelectorType, getStrFromTpl, getUTCTimestamp, getValsFromAttrs, getWidths, hide, icons, includes, increaseId, init, instance, isDateStr, isEmpty, isNull, isOutside, isProxy, isScrollUp, isSubset, keyCond, moveItem, notice, offset, orca, paramToJson, parseStr, parseUrlArr, plan, preventDft, privacy, promiseRaf, prompt, propsMap, purifyHtml, regComp, regExps, removeItem, removeStyle, removeStyles, renderTpl, repeatStr, replaceFrag, requireTypes, scrollTo, select2Tree, setAttr, setAttrs, setContent, setRtl, setSingleSel, show, sliceFrags, sliceStrEnd, slideDown, slideToggle, slideUp, splice, splitNum, spreadBool, startUpper, stdParam, storage, storeNode, strToJson, style, support, theme, throttle, toLocalTime, toNumber, toPixel, toggle, tplToEl, tplToEls, transformTools, treeTools, trim, ul2Tree, unique, valToArr, validTools };

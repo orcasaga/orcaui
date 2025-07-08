@@ -1,8 +1,8 @@
 
 /*!
- * @since Last modified: 2025-7-1 19:4:36
+ * @since Last modified: 2025-7-8 10:23:14
  * @name OrcaUI front-end framework.
- * @version 1.0.3
+ * @version 1.0.4
  * @author OrcaUI development team <orcasaga@outlook.com>
  * @description OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.
  * @see {@link https://www.orcaui.com|Official website}
@@ -18,7 +18,7 @@
  * @since Last modified: 2025-06-23 17:22:00
  */
 /*
- *Last modified: 2025-06-23 10:33:58
+ *Last modified: 2025-07-01 23:36:33
  */
 :root,
 [scheme=dark]:where(:not(:root)) {
@@ -442,10 +442,10 @@
     "Roboto",
     "Noto Naskh Arabic",
     "Amiri", "Droid Arabic Naskh",
-    "PingFang TC",
-    "Hiragino Sans TC", "Microsoft JhengHei", "Noto Sans TC",
     "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", "Noto Sans SC",
+    "PingFang TC",
+    "Hiragino Sans TC", "Microsoft JhengHei", "Noto Sans TC",
     "Hiragino Kaku Gothic Pro",
     "Yu Gothic", "Meiryo",
     "Apple SD Gothic Neo",
@@ -9309,33 +9309,47 @@ button:where([type=submit]) OC-SPIN {
   }
 }
 /*Field container*/
-._field {
+OC-FIELD {
   --_form-h: var(--_rem-input);
-  --_form-g: var(--_rem-space);
+  --_form-p-input: var(--_rem-space);
   --_form-p-se: 0;
   --_form-p-tb: 0;
   --_form-m-tb: var(--_m);
+  --_form-m-label: var(--_rem-space);
   --_form-bw: 1px;
-  --_form-w-label: var(--_w-label);
+  --_form-w-label: auto;
+  --_form-w-cont: var(--_w-input);
+  --_form-a: flex-start;
+  --_form-d: grid;
+  --_form-g: var(--_rem-space);
   width: inherit;
   margin: var(--_form-m-tb) auto;
   padding: var(--_form-p-tb) var(--_form-p-se);
-  display: flex;
-  align-items: flex-start;
+  display: var(--_form-d);
+  grid-template-columns: var(--_form-w-cont) 1fr;
+  grid-template-areas: "a a" "b c";
+  column-gap: var(--_form-g);
   position: relative;
   box-sizing: border-box;
+  &:where(:not(:has(>._field-help))) {
+    grid-template-columns: var(--_form-w-cont);
+    grid-template-areas: "a" "b";
+  }
   >._field-label {
     color: var(--_c-text);
     width: var(--_form-w-label);
-    text-align: end;
-    margin-inline-end: var(--_rem-space);
     height: var(--_form-h);
     line-height: calc(var(--_form-h)/2);
     display: flex;
-    justify-content: flex-end;
+    justify-content: var(--_form-a);
     align-items: center;
-    img,
-    [class*=icon] {
+    grid-area: a;
+    >img,
+    >[class*=icon],
+    >[rep=icon],
+    >[rep=disk],
+    >[rep=cube],
+    >[rep=image] {
       width: var(--_rem-subtitle);
       margin-inline-end: var(--_rem-min);
     }
@@ -9344,11 +9358,11 @@ button:where([type=submit]) OC-SPIN {
     }
   }
   >._field-cont {
-    width: var(--_w-input);
-    display: flex;
+    display: inline-flex;
     align-items: flex-start;
     flex-direction: column;
     position: relative;
+    grid-area: b;
     >._field-note {
       font-size: var(--_rem-caption);
       line-height: var(--_rem-subtitle);
@@ -9367,7 +9381,7 @@ button:where([type=submit]) OC-SPIN {
         line-height: var(--_form-h);
       }
       input:where(:not([embed]):not([type=radio], [type=checkbox], [type=range], [type=color], [type=reset], [type=submit])) {
-        padding: 0 var(--_form-g);
+        padding: 0 var(--_form-p-input);
       }
       input:where([type=file]:not([embed]))::file-selector-button,
       input:where([type=file]:not([embed]))::-webkit-file-upload-button {
@@ -9398,8 +9412,8 @@ button:where([type=submit]) OC-SPIN {
       }
       textarea:where(:not([embed])) {
         --_field-p-tb: calc((var(--_form-h) - var(--_rem-list))/2);
-        padding-inline-start: var(--_form-g);
-        padding-inline-end: var(--_form-g);
+        padding-inline-start: var(--_form-p-input);
+        padding-inline-end: var(--_form-p-input);
       }
       input:where(:not([embed]):not([type=radio], [type=checkbox], [type=color], [type=submit], [type=reset])),
       select:where(:not([embed])),
@@ -9420,8 +9434,8 @@ button:where([type=submit]) OC-SPIN {
       }
       >OC-DATETIME {
         --_date-w: 100%;
-        ._datetime:where([display=inline]){
-          --_date-panel-w:100%;
+        ._datetime:where([display=inline]) {
+          --_date-panel-w: 100%;
           width: 100%;
         }
       }
@@ -9454,6 +9468,7 @@ button:where([type=submit]) OC-SPIN {
       position: absolute;
       inset-inline-end: var(--_rem-space);
       inset-block-start: calc((var(--_form-h) - var(--_rem-list))/2);
+      pointer-events: none;
     }
     &:has(>._box-tools)>._field-input textarea:where(:not([embed])) {
       padding-inline-end: var(--_rem-list);
@@ -9479,8 +9494,9 @@ button:where([type=submit]) OC-SPIN {
     align-items: center;
     line-height: var(--_form-h);
     height: var(--_form-h);
-    >* {
-      margin-inline-start: var(--_rem-space);
+    grid-area: c;
+    >*:where(:not(:first-child)) {
+      margin-inline-start: var(--_form-p-input);
     }
     [rep=text] {
       line-height: calc(var(--_form-h)/2);
@@ -9512,73 +9528,127 @@ button:where([type=submit]) OC-SPIN {
       border-radius: 100%;
     }
   }
-}
-._field:where(:not(._field-compact)) {
-  >._field-help OC-BTN:where(:not([size])) {
-    --_btn-p-se: var(--_form-g);
+  &:where([flexible]:not([type])),
+  &:where([flexible][type='']) {
+    &:where(:has(>._field-help)) {
+      grid-template-columns: 1fr auto;
+    }
+    &:where(:not(:has(>._field-help))),
+    &:where(:has(>._field-help:empty)) {
+      grid-template-columns: 1fr;
+      grid-template-areas: "a" "b";
+    }
   }
 }
-._field:where(._field-embed) {
+OC-FIELD:where(:not([type=compact])) {
+  >._field-help OC-BTN:where(:not([size])),
+  >._field-help OC-BTN:where([size=""]) {
+  }
+}
+OC-FIELD:where([type=fixed]) {
+  --_form-a: flex-end;
+  --_form-w-label: var(--_w-label);
+  &:where(:has(>._field-label:not(:empty)):has(>._field-help:not(:empty))) {
+    grid-template-columns: var(--_form-w-label) var(--_form-w-cont) 1fr;
+    grid-template-areas: "a b c";
+  }
+  &:where(:has(>._field-label):not(:has(>._field-help))),
+  &:where(:has(>._field-label):has(>._field-help:empty)) {
+    grid-template-columns: var(--_form-w-label) var(--_form-w-cont);
+    grid-template-areas: "a b";
+  }
+  &:where(:has(>._field-help):not(:has(>._field-label))),
+  &:where(:has(>._field-help):has(>._field-label:empty)) {
+    grid-template-columns: var(--_form-w-cont) 1fr;
+    grid-template-areas: "b c";
+  }
+  &[flexible] {
+    &:where(:has(>._field-label:not(:empty)):has(>._field-help:not(:empty))) {
+      grid-template-columns: var(--_form-w-label) 1fr auto;
+    }
+    &:where(:has(>._field-label):not(:has(>._field-help))),
+    &:where(:has(>._field-label):has(>._field-help:empty)) {
+      grid-template-columns: var(--_form-w-label) 1fr;
+    }
+    &:where(:has(>._field-help):not(:has(>._field-label))),
+    &:where(:has(>._field-help):has(>._field-label:empty)) {
+      grid-template-columns: 1fr auto;
+    }
+  }
+}
+OC-FIELD:where([type=embed]) {
+  --_form-a: flex-start;
+  --_form-d: flex;
+  --_form-w-label: var(--_w-label);
   >._field-label {
-    text-align: start;
-    justify-content: flex-start;
-    padding-inline-start: var(--_form-g);
+    padding-inline-start: var(--_form-p-input);
     position: absolute;
     inset-inline-start: 0;
     inset-block-start: 0;
     z-index: 3;
+    pointer-events: none;
   }
-  &._flexible>._field-cont {
+  >._field-cont {
+    width: var(--_form-w-cont);
+  }
+  &[flexible]>._field-cont {
     flex: auto;
   }
   >._field-cont>._field-input {
     input:where(:not([embed]):not([type=radio], [type=checkbox], [type=range], [type=reset], [type=submit])),
     textarea:where(:not([embed])) {
-      padding-inline-start: var(--_form-w-label);
+      padding-inline-start: calc(var(--_form-w-label) + var(--_form-p-input));
     }
   }
 }
-._field:where(._field-full),
-._field:where(._field-apart) {
+OC-FIELD:where([type=full]) {
+  --_form-w-cont: 0;
+  --_form-a: flex-start;
+  &:where(:has(>._field-label:not(:empty)):has(>._field-help:not(:empty))) {
+    grid-template-columns: var(--_form-w-label) 1fr auto;
+    grid-template-areas: "a b c";
+  }
+  &:where(:has(>._field-label):not(:has(>._field-help))),
+  &:where(:has(>._field-label):has(>._field-help:empty)) {
+    grid-template-columns: var(--_form-w-label) 1fr;
+    grid-template-areas: "a b";
+  }
+  &:where(:has(>._field-help):not(:has(>._field-label))),
+  &:where(:has(>._field-help):has(>._field-label:empty)) {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "b c";
+  }
   >._field-label {
-    width: auto;
-    text-align: start;
-    justify-content: flex-start;
+    max-width: var(--_w-label);
   }
   >._field-cont {
-    width: 0;
     flex: auto;
-    text-align: start;
   }
 }
-:where(._field-full)._field>._field-label {
-  max-width: var(--_w-label);
-}
-:where(._field-apart)._field {
-  --_form-m-tb:0;
-  position: relative;
-  padding-block-end:var(--_p);
-  &:where(:has(._field-label, ._field-help)) {
-    padding-block-start: var(--_form-h);
+OC-FIELD:where([type=apart]) {
+  --_form-m-tb: 0;
+  --_form-w-cont: auto;
+  --_form-a: flex-start;
+  &:where(:has(>._field-label:not(:empty)):has(>._field-help:not(:empty))) {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "a c" "b b";
   }
-  >._field-label,
-  >._field-help {
-    position: absolute;
-    inset-block-start: 0;
+  &:where(:has(>._field-label):not(:has(>._field-help))),
+  &:where(:has(>._field-label):has(>._field-help:empty)) {
+    grid-template-columns: 1fr;
+    grid-template-areas: "a" "b";
   }
-  &:where(:not(:has(._field-label)):not(:has(._field-help))) {
-    padding-block-end: 0;
-  }
-  >._field-label {
-    inset-inline-start: 0;
+  &:where(:has(>._field-help):not(:has(>._field-label))),
+  &:where(:has(>._field-help):has(>._field-label:empty)) {
+    grid-template-columns: 1fr;
+    grid-template-areas: "c" "b";
   }
   >._field-help {
-    inset-inline-end: 0;
     OC-BTN:where(:not([size])) {
       --_btn-h: min(calc(var(--_form-h) - 1rem), var(--_rem-display));
     }
-    OC-BTN{
-      --_btn-r:var(--_r-input-sm);
+    OC-BTN {
+      --_btn-r: var(--_r-input-sm);
       --_btn-fs: var(--_rem-caption);
     }
     [rep=disk],
@@ -9587,29 +9657,40 @@ button:where([type=submit]) OC-SPIN {
       height: min(calc(var(--_form-h) - 1rem), var(--_rem-display));
     }
     [rep=image],
-    [rep=cube]{
+    [rep=cube] {
       border-radius: var(--_r-input-sm);
     }
   }
 }
-:where(._field-compact)._field {
-  --_form-g: 0;
+OC-FIELD:where([type=compact]) {
+  --_form-p-input: 0;
   --_form-m-tb: 0;
   --_form-p-tb: var(--_rem-space);
   --_form-p-se: var(--_rem-body);
+  --_form-w-cont: auto;
+  --_form-a: flex-start;
+  --_form-w-label: auto;
   border-block-start: var(--_form-bw) solid var(--_c-text-bd);
   margin: 0;
+  &:where(:has(>._field-label:not(:empty)):has(>._field-help:not(:empty))) {
+    grid-template-columns: var(--_form-w-label) 1fr auto;
+    grid-template-areas: "a b c";
+  }
+  &:where(:has(>._field-label):not(:has(>._field-help))),
+  &:where(:has(>._field-label):has(>._field-help:empty)) {
+    grid-template-columns: var(--_form-w-label) 1fr;
+    grid-template-areas: "a b";
+  }
+  &:where(:has(>._field-help):not(:has(>._field-label))),
+  &:where(:has(>._field-help):has(>._field-label:empty)) {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "b c";
+  }
   >._field-label {
-    width: auto;
     max-width: var(--_w-label);
-    margin-inline-end: 0;
-    text-align: start;
-    justify-content: flex-start;
   }
   >._field-cont {
-    width: auto;
     flex: auto;
-    text-align: start;
     >._box-tools {
       inset-inline-end: 0;
     }
@@ -9712,8 +9793,8 @@ button:where([type=submit]) OC-SPIN {
         OC-FIELDS {
           >[rep=wrap]>OC-BTN {
             --_btn-c-sd: transparent;
-            --_btn-r:var(--_r-input-sm);
-            --_btn-h:var(--_rem-display);
+            --_btn-r: var(--_r-input-sm);
+            --_btn-h: var(--_rem-display);
             --_btn-fs: var(--_rem-caption);
             border-start-start-radius: var(--_btn-r);
             border-end-start-radius: var(--_btn-r);
@@ -9750,8 +9831,8 @@ button:where([type=submit]) OC-SPIN {
     OC-BTN:where(:not([size])) {
       --_btn-h: min(var(--_form-h), var(--_rem-display));
     }
-    OC-BTN{
-      --_btn-r:var(--_r-input-sm);
+    OC-BTN {
+      --_btn-r: var(--_r-input-sm);
       --_btn-fs: var(--_rem-caption);
     }
     [rep=disk],
@@ -9760,12 +9841,12 @@ button:where([type=submit]) OC-SPIN {
       height: min(var(--_form-h), var(--_rem-display));
     }
     [rep=image],
-    [rep=cube]{
+    [rep=cube] {
       border-radius: var(--_r);
     }
   }
 }
-._field:where(._field-sm, ._field-lg) {
+OC-FIELD:where([size=sm], [size=lg]) {
   >._field-cont>._field-input {
     input:where([type=reset], [type=submit]),
     button,
@@ -9774,62 +9855,56 @@ button:where([type=submit]) OC-SPIN {
     }
   }
 }
-._field:where(._field-sm) {
+OC-FIELD:where([size=sm]) {
   --_form-h: var(--_rem-display);
-  --_form-g: var(--_rem-space);
+  --_form-p-input: var(--_rem-space);
   --_form-m-tb: var(--_rem-space);
   >._field-help OC-BTN:where(:not([size])) {
-    --_btn-p-se: var(--_form-g);
   }
-  &:where(:not(._field-apart, ._field-compact)) {
+  &:where(:not([type=apart], [type=compact])) {
     >._field-help OC-BTN:where(:not([size])) {
       --_btn-h: var(--_form-h);
     }
   }
-  &._field-compact {
+  &[type=compact] {
     --_form-p-tb: var(--_rem-space);
   }
-  &._field-apart {
+  &[type=apart] {
     --_form-m-tb: var(--_rem-space);
   }
 }
-._field:where(._field-lg) {
-  --_form-h: calc(var(--_rem-input) + 1rem);
-  --_form-g: calc(var(--_g)*3);
+OC-FIELD:where([size=lg]) {
+  --_form-h: var(--_rem-max);
+  --_form-p-input: calc(var(--_g)*3);
   >._field-cont>._field-input {
     input:where([type=reset], [type=submit]),
     button,
     >OC-BTN {
-      --_btn-p-se: 2.33em;
     }
   }
-  &:where(:not(._field-apart, ._field-compact)) {
+  &:where(:not([type=apart], [type=compact])) {
     >._field-help OC-BTN:where(:not([size])) {
       --_btn-h: var(--_form-h);
     }
   }
 }
 @media (any-hover: none) {
-  ._field>._field-cont>._field-input select:where([multiple]:not([embed])) {
+  OC-FIELD>._field-cont>._field-input select:where([multiple]:not([embed])) {
     min-height: auto;
   }
 }
-@media  (max-width:calc( 900px - 1px)) {
-  ._field>._field-help,
-  ._field>._field-help>* {
+@media (max-width:calc(900px - 1px)) {
+  OC-FIELD>._field-help,
+  OC-FIELD>._field-help>* {
     font-size: var(--_rem-caption);
   }
-  ._field:where(:not(._field-apart, ._field-full, ._field-compact, ._field-embed)) {
+  OC-FIELD:where(:not([type=apart], [type=full], [type=compact], [type=embed])) {
     --_form-m-se: var(--_p);
-    >._field-label {
-      text-align: start;
-      width: auto;
-      justify-content: flex-start;
-    }
+    --_form-w-cont: auto;
+    --_form-a: flex-start;
+    --_form-w-label: auto;
     >._field-cont {
-      width: auto;
       flex: auto;
-      text-align: start;
       input:where(:not([embed]):not([type=radio], [type=checkbox], [type=range], [type=reset], [type=submit], [type=color])),
       select:where(:not([embed])),
       textarea:where(:not([embed])),
@@ -9839,24 +9914,23 @@ button:where([type=submit]) OC-SPIN {
       }
     }
   }
-  ._field:where(._field-embed) {
+  OC-FIELD:where([type=embed]) {
+    --_form-w-cont: auto;
     >._field-cont {
-      width: auto;
       flex: auto;
-      text-align: start;
     }
   }
-  ._field:where(:not(._field-compact, ._field-embed)) {
+  OC-FIELD:where(:not([type=compact], [type=embed])) {
     >._field-help {
       [rep=text] {
         width: auto !important;
       }
     }
   }
-  :where(._field-full)._field>._field-label {
+  :where([type=full])OC-FIELD>._field-label {
     max-width: none;
   }
-  ._field:where(:not(._field-apart, ._field-compact, ._field-embed)) {
+  OC-FIELD:where(:not([type=apart], [type=compact], [type=embed])) {
     margin-block-start: calc(var(--_form-h) + var(--_form-m-tb));
     position: relative;
     >._field-label,
@@ -12888,7 +12962,7 @@ OC-TWILIGHT {
 [lazy-async]{
 }
 /*
-Last modified: 2025-06-25 15:56:18
+Last modified: 2025-07-07 22:56:33
 */
 /*Progress*/
 OC-PROGRESS {
@@ -12906,6 +12980,10 @@ OC-PROGRESS {
     --_prog-w: calc(var(--_rem-input)*3);
     --_prog-thk: .6rem;
     --_prog-fs: var(--_rem-body);
+    --_prog-fs-label: var(--_prog-fs);
+    --_prog-fs-num: var(--_prog-fs-label);
+    --_prog-fs-unit: var(--_prog-fs-label);
+    --_prog-fs-tips: var(--_prog-fs-label);
     --_prog-lh: var(--_rem-list);
     width: 100%;
     box-sizing: border-box;
@@ -12941,6 +13019,15 @@ OC-PROGRESS {
         &[disabled] {
             opacity: 0.5;
         }
+    }
+   [rep=number]{
+        font-size: var(--_prog-fs-num);
+    }
+    [rep=unit]{
+        font-size: var(--_prog-fs-unit);
+    }
+    [rep=tips]{
+        font-size: var(--_prog-fs-tips);
     }
 }
 ._progress [rep=complete] {
@@ -13027,31 +13114,31 @@ OC-PROGRESS {
     transform: translate(calc(-50%*var(--_dir-coef)), -50%);
     inset-block-start: 60%;
 }
-._progress[thk=xxs] {
+._progress[size=xxs] {
     --_prog-thk: .1rem;
 }
-._progress[thk=xs] {
+._progress[size=xs] {
     --_prog-thk: .2rem;
 }
-._progress[thk=sm] {
+._progress[size=sm] {
     --_prog-thk: var(--_rem-min);
 }
-._progress[thk=md] {
+._progress[size=md] {
     --_prog-thk: var(--_rem-root);
 }
-._progress[thk=lg] {
+._progress[size=lg] {
     --_prog-thk: var(--_rem-caption);
 }
-._progress[thk=xl] {
+._progress[size=xl] {
     --_prog-thk: var(--_rem-body);
 }
-._progress[thk=xxl] {
+._progress[size=xxl] {
     --_prog-thk: var(--_rem-subtitle);
 }
-._progress:where([size][type=line]) {
+._progress:where([width][type=line]) {
     width: var(--_prog-w);
 }
-._progress[size=xxs] {
+._progress[width=xxs] {
     --_prog-w: var(--_rem-display);
     --_prog-fs: var(--_rem-caption);
     --_prog-lh: var(--_rem-subtitle);
@@ -13059,7 +13146,7 @@ OC-PROGRESS {
         inset-block-end: 0;
     }
 }
-._progress[size=xs] {
+._progress[width=xs] {
     --_prog-w: var(--_rem-input);
     --_prog-fs: var(--_rem-caption);
     --_prog-lh: var(--_rem-subtitle);
@@ -13067,7 +13154,7 @@ OC-PROGRESS {
         inset-block-end: 0;
     }
 }
-._progress[size=sm] {
+._progress[width=sm] {
     --_prog-w: calc(var(--_rem-input)*2);
     --_prog-fs: var(--_rem-caption);
     --_prog-lh: var(--_rem-subtitle);
@@ -13075,28 +13162,37 @@ OC-PROGRESS {
         inset-block-end: 0;
     }
 }
-._progress[size=md] {
+._progress[width=md] {
     --_prog-w: calc(var(--_rem-input)*4);
     &[type=semicircle] [rep=text] {
         inset-block-end: var(--_rem-space);
     }
 }
-._progress[size=lg] {
+._progress[width=lg] {
     --_prog-w: calc(var(--_rem-input)*5);
     &[type=semicircle] [rep=text] {
         inset-block-end: var(--_rem-caption);
     }
+    &:where(:not([type=line])){
+        --_prog-fs-num:var(--_rem-subtitle);
+    }
 }
-._progress[size=xl] {
+._progress[width=xl] {
     --_prog-w: calc(var(--_rem-input)*6);
     &[type=semicircle] [rep=text] {
         inset-block-end: var(--_rem-subtitle);
     }
+    &:where(:not([type=line])){
+        --_prog-fs-num:var(--_rem-subtitle);
+    }
 }
-._progress[size=xxl] {
+._progress[width=xxl] {
     --_prog-w: calc(var(--_rem-input)*7);
     &[type=semicircle] [rep=text] {
         inset-block-end: var(--_rem-list);
+    }
+    &:where(:not([type=line])){
+        --_prog-fs-num:var(--_rem-subtitle);
     }
 }
 ._progress[type*=circle] [rep=bar]:hover {
@@ -15340,6 +15436,7 @@ OC-TEXTAREA {
     --_tarea-lh: var(--_em-list);
     --_tarea-sd: var(--_c-prim-sd);
     --_tarea-bw: 1px;
+    --_tarea-bc: var(--_c-text-bd);
     --_tarea-bg: var(--_c-stage);
     --_tarea-rows: 5;
     --_tarea-g-tools: calc((var(--_rem-display) - var(--_rem-list))/2);
@@ -15359,7 +15456,7 @@ OC-TEXTAREA {
         color: var(--_c-caption);
         background-color: var(--_tarea-bg);
         border-radius: var(--_tarea-r);
-        border: var(--_tarea-bw) solid var(--_c-text-bd);
+        border: var(--_tarea-bw) solid var(--_tarea-bc);
         width: 100%;
         box-sizing: border-box;
         display: flex;
@@ -16013,7 +16110,7 @@ OC-RANGE {
             box-shadow: none;
         }
     }
-    &[axis=y] {
+    &[flow=v] {
         display: inline-flex;
         min-width: var(--_range-sz-w);
         min-height: var(--_range-sz-h);
@@ -16482,7 +16579,6 @@ OC-SELECT {
   }
   >[rep=tools] {
     --_tools-c: var(--_c-caption);
-    --_tools-c: hover:var(--_c-prim);
     width: auto;
     >* {
       font-size: var(--_rem-caption);
@@ -16932,7 +17028,7 @@ OC-UPLOAD {
             ._upload-file {
                 width: 100%;
                 aspect-ratio: 4 / 3;
-                border-radius: var(--_r);
+                border-radius: var(--_r-input);
                 border: 1px solid var(--_c-text-bd);
                 overflow: hidden;
                 position: relative;
@@ -17087,6 +17183,10 @@ OC-UPLOAD {
                 outline: none;
             }
         }
+        &[type=cube] li ,
+        &[type=card] li ._upload-file{
+            border-radius: var(--_r);
+        }
         &[type=card] ul {
             padding-block-start: 0;
             padding-block-end: var(--_rem-space);
@@ -17154,12 +17254,14 @@ OC-UPLOAD {
     }
 }
 /*
-Last modified: 2025-06-21 23:16:30
+Last modified: 2025-07-05 10:50:16
 */
 /*Date and datetime picker*/
 ._datetime {
     --_date-label-h: calc(var(--_rem-input) - var(--_rem-min));
     --_date-panel-w: min(calc(var(--_rem-input)*10 - 2px),100vw);
+    --_date-menu-w: calc(var(--_rem-subtitle)*10);
+    --_date-side-w: calc(var(--_rem-title)*10);
     height: auto;
     position: relative;
     display: inline-flex;
@@ -17189,7 +17291,7 @@ Last modified: 2025-06-21 23:16:30
     }
     [rep=menu] {
         border-inline-end: 1px solid var(--_c-text-bd);
-        width: calc(var(--_rem-body)*10);
+        width: var(--_date-menu-w);
         padding: var(--_rem-space);
         >* {
             height: var(--_rem-input);
@@ -17209,20 +17311,20 @@ Last modified: 2025-06-21 23:16:30
     }
     [rep=detail] {
         border-inline-start: 1px solid var(--_c-text-bd);
-        width: 24rem;
+        width: var(--_date-side-w);
         padding: var(--_rem-space);
         box-sizing: border-box;
         [rep=heading] {
-            padding-block-end: .8rem;
+            padding-block-end: var(--_rem-space);
             border-block-end: 1px solid var(--_c-text-bd);
         }
         [rep=lunar] {
-            padding-block-start: .8rem;
-            padding-block-end: .8rem;
+            padding-block-start: var(--_rem-space);
+            padding-block-end: var(--_rem-space);
             border-block-end: 1px solid var(--_c-text-bd);
         }
         [rep=event] {
-            padding-block-start: .8rem;
+            padding-block-start: var(--_rem-space);
         }
     }
     [rep=foot] {
@@ -17587,7 +17689,7 @@ Last modified: 2025-06-21 23:16:30
             margin: .2rem 0;
         }
         [rep=list]>* {
-            height: calc(var(--_rem-display)*8);
+            height: calc(var(--_rem-display)*7 + var(--_rem-body));
             overflow-y: auto;
             overflow-x: hidden;
             overscroll-behavior: contain;
@@ -17700,23 +17802,23 @@ OC-FIELDS {
     display: flex;
     width: 100%;
   }
-  &[shape="round"] {
+  &[shape=round] {
     --_fields-r: var(--_fields-h);
   }
-  &[shape="square"] {
+  &[shape=square] {
     --_fields-r: 0;
   }
   &:where(:not([full])) {
     display: inline-flex;
     width: var(--_fields-w);
   }
-  > [rep="wrap"] {
+  > [rep=wrap] {
     display: flex;
     align-items: center;
     box-sizing: border-box;
     width: 100%;
-    > [rep="label"],
-    > [rep="unit"] {
+    > [rep=label],
+    > [rep=unit] {
       color: var(--_c-brief);
       line-height: calc(var(--_fields-h) - 2px);
       background: linear-gradient(
@@ -17732,22 +17834,22 @@ OC-FIELDS {
       max-width: 60%;
       text-overflow: ellipsis;
     }
-    > [rep="label"],
-    > [rep="unit"] {
+    > [rep=label],
+    > [rep=unit] {
       border-block-start: var(--_fields-bw) solid var(--_fields-bc);
       border-block-end: var(--_fields-bw) solid var(--_fields-bc);
     }
-    > [rep="label"] {
+    > [rep=label] {
       border-inline-start: var(--_fields-bw) solid var(--_fields-bc);
       border-start-start-radius: var(--_fields-r);
       border-end-start-radius: var(--_fields-r);
     }
-    > [rep="unit"]:last-child {
+    > [rep=unit]:last-child {
       border-inline-end: var(--_fields-bw) solid var(--_fields-bc);
       border-start-end-radius: var(--_fields-r);
       border-end-end-radius: var(--_fields-r);
     }
-    > [rep="fields"] {
+    > [rep=fields] {
       background-color: var(--_c-stage);
       border: var(--_fields-bw) solid var(--_fields-bc);
       height: var(--_fields-h);
@@ -17856,10 +17958,10 @@ OC-FIELDS {
       border-start-start-radius: 0;
       border-end-start-radius: 0;
     }
-    &:has(> [rep="fields"] + OC-BTN) > [rep="fields"] {
+    &:has(> [rep=fields] + OC-BTN) > [rep=fields] {
       border-inline-end: 0;
     }
-    > [rep="fields"]:focus-within + OC-BTN > [rep="wrap"] {
+    > [rep=fields]:focus-within + OC-BTN > [rep=wrap] {
       border-inline-start-color: var(--_fields-c-foc);
     }
     /* >[comp] {
@@ -17871,14 +17973,14 @@ OC-FIELDS {
             }
         } */
   }
-  &[dividable] [rep="fields"] > [comp]:where(:not(:first-child)) {
+  &[dividable] [rep=fields] > [comp]:where(:not(:first-child)) {
     border-inline-start: var(--_fields-bw) solid var(--_fields-bc);
   }
-  &[size="sm"] {
+  &[size=sm] {
     --_fields-h: var(--_em-display);
     --_fields-r: var(--_r-input-sm);
   }
-  &[size="lg"] {
+  &[size=lg] {
     --_fields-h: var(--_em-max);
     --_fields-r: var(--_r-input-lg);
   }
@@ -20959,7 +21061,7 @@ OC-ACCORDION {
     border-end-end-radius: inherit;
   }
   &:where(:not([placement=center-max], [placement=left-max], [placement=right-max])) ._popup-body {
-    max-height: calc(100vh - var(--_g-full)*10);
+    max-height: calc(100vh - var(--_g-full)*4);
   }
   ._popup-body ._popup-cont {
     border-radius: inherit;
@@ -21173,6 +21275,7 @@ OC-ACCORDION {
   --_drawer-y-lg: min(60rem, 70%);
   --_drawer-y-max: calc(100% - var(--_rem-input));
   --_drawer-w: var(--_w-drawer);
+  --_drawer-r: calc(var(--_r)*5);
   will-change: transform, opacity, width, height;
   contain: layout;
   height: 100%;
@@ -21337,6 +21440,7 @@ OC-ACCORDION {
     display: flex;
     flex-direction: column;
     max-height: 100%;
+    border-radius: inherit;
     overflow-x: hidden;
     overflow-y: auto;
     position: relative;
@@ -21419,10 +21523,16 @@ OC-ACCORDION {
     inset-block-end: 0;
     transform: translateY(100%);
   }
-  &[placement=bottom] ._box-tools {
-    inset-inline-end: 0;
-    inset-block-start: 0;
-    transform: translateY(-100%);
+  &[placement=bottom] {
+    ._drawer-wrap{
+      border-top-left-radius: var(--_drawer-r);
+      border-top-right-radius: var(--_drawer-r);
+    }
+    ._box-tools {
+      inset-inline-end: 0;
+      inset-block-start: 0;
+      transform: translateY(-100%);
+    }
   }
   &[show] ._box-tools {
     opacity: 1;
@@ -21592,7 +21702,7 @@ OC-ACCORDION {
     border-end-end-radius: inherit;
   }
   &:where(:not([placement=center-max])) ._dialog-body {
-    max-height: calc(100vh - var(--_g-full)*10);
+    max-height: calc(100vh - var(--_g-full)*4);
   }
   &:where([show]) {
     inset-inline-start: 0;
@@ -22534,12 +22644,12 @@ OC-ACCORDION {
       --_msnry-cols: 24;
     }
   }
-    ._scroller {
-      height: var(--_hh-h);
-      width: var(--_hh-w);
-    }
-    table {
-      width: var(--_hh-w);
+  ._scroller {
+    height: var(--_hh-h);
+    width: var(--_hh-w);
+  }
+  table {
+    width: var(--_hh-w);
   }
 }
 /* Tablet device (xs+sm+md) */
@@ -23283,8 +23393,8 @@ OC-ACCORDION {
     "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif,
     "PT Sans", Tahoma,
     "Amiri", "Noto Naskh Arabic", "Arial", "Tahoma",
-     "PingFang TC", "Microsoft JhengHei",
     "Microsoft YaHei", "微软雅黑",
+     "PingFang TC", "Microsoft JhengHei",
     "Yu Gothic", "Meiryo",
     "Malgun Gothic",
     sans-serif;
@@ -24151,7 +24261,7 @@ OC-ACCORDION {
 }
 /* xxs->Phone (<600 | <900) */
 /*
- *Last modified: 2025-06-24 06:15:33
+ *Last modified: 2025-07-05 07:31:16
  */
 @media (max-width: calc(600px - 1px)),
 (min-width: 600px) and (max-width: calc(900px - 1px)) and (orientation:landscape) {
@@ -24181,21 +24291,21 @@ OC-ACCORDION {
     }
   }
   ._datetime {
-    --_label-h: calc(var(--_rem-display) - var(--_rem-min));
+    --_date-label-h: calc(var(--_rem-display) - var(--_rem-min));
     [rep=main] [rep=body] {
-      min-height: 22rem;
+      min-height: 24rem;
     }
     [panel=year] [rep=content] {
-      margin: calc((3.3rem - var(--_label-h))/2) 0;
+      margin: calc((3.8rem - var(--_date-label-h))/2) 0;
     }
     [panel=month] [rep=content] {
-      margin: calc((5.3rem - var(--_label-h))/2) 0;
+      margin: calc((5.6rem - var(--_date-label-h))/2) 0;
     }
     [panel=daytime] [rep=list] {
       margin: 0;
     }
     [panel=daytime] [rep=list]>* {
-      height: calc(var(--_rem-display)*8 - 5.7rem);
+      height: calc(var(--_rem-display)*6);
     }
   }
   ._hide-xxs {
