@@ -3,6 +3,39 @@
 All changes to OrcaUI including new features, updates, and removals are documented here.
 
 
+## [v1.0.5] - 2025-07-26
+
+### Distribution Files
+- **JS**: https://unpkg.com/orcaui@1.0.5/dist/js/orca.js
+- **CSS**: https://unpkg.com/orcaui@1.0.5/dist/css/orca.css
+- **Zip**: https://unpkg.com/orcaui@1.0.5/dist.zip
+
+### Changes
+
+#### Fixed
+- Fixed an issue where the `Range` component's `reset` method was not working.
+- Changed the parameter in the `Swipe` & `Scroll` libraries from `aixs` to `flow`, with possible values `h/v`.
+- Fixed a bug in the `findSnap` function of the `Swipe` module.
+- Fixed an issue in the `Gesture` module where setting `step.value` had no effect.
+- Removed the `total.hyphen` parameter in the `Swipe` module and added a `total.format` parameter to allow users to customize the text format of the data summary.
+- Fixed the `Gesture` module to support zoom behavior even when already flipped horizontally or vertically.
+- Fixed the `getEl` and `getEls` functions to allow retrieving child nodes from within a `template` element.
+- Modified the default trigger timing in the `Lazy` module: it now triggers when the target element partially intersects with the viewport.
+- Fixed the `Swipe` module to pause videos and audios in other swipes when switching slides.
+- Modified the `Swipe` module so that the `gap` and `divide` parameters remain effective in `slides: 'auto'` mode.
+
+#### Added
+- Added `thumb` parameter to `Swipe`, allowing association with other swipe instances.
+- Added `toLocate` method to `Swipe`, enabling direct slide positioning.
+- Added several icons related to the `Viwer` module.
+- Added built-in tool names in the `createTools` method.
+- Added the `isChildVisible` utility function to determine whether a child node is visible within its parent.
+
+
+#### Removed
+- Null
+
+
 ## [v1.0.4] - 2025-07-08
 
 ### Distribution Files

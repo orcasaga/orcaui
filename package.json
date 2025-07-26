@@ -1,6 +1,6 @@
 {
   "name": "orcaui",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "OrcaUI Development Team",
   "license": "MIT",
   "description": "OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.",

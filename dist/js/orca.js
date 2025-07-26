@@ -1,8 +1,8 @@
 
 /*!
- * @since Last modified: 2025-7-8 10:22:48
+ * @since Last modified: 2025-7-26 16:46:28
  * @name OrcaUI front-end framework.
- * @version 1.0.4
+ * @version 1.0.5
  * @author OrcaUI development team <orcasaga@outlook.com>
  * @description OrcaUI is a self-contained UI framework that delivers the power and elegance of native Web Components. Like its namesake orca, it combines comprehensive features with intuitive usability - offering ready-to-use components that work across all modern browsers. Designed for developers who need production-ready UI solutions without framework dependencies.
  * @see {@link https://www.orcaui.com|Official website}
@@ -75,6 +75,7 @@
             easeOutIn: _getCssVar(`--${_prefix}bez-eoi`)
         },
         isNarrowScr: ~~(_getCssVar(`--${_prefix}isnarrow`)),
+        isPortraitScr: ~~(_getCssVar(`--${_prefix}isportrait`)),
         isTouchScr: ('ontouchstart' in document.documentElement),
         dragNode: null,
         compSign: 'comp',
@@ -130,6 +131,24 @@
             note: 'Please enter your notes...',
             fileName: 'New File',
             downloadName: 'Download-File',
+        },
+        viewer: {
+            close: 'Close Viewer',
+            play: 'Paused, click to play',
+            pause: 'Playing, click to pause',
+            fullscrOn: 'Not fullscreen, click to expand',
+            fullscrOff: 'Fullscreen, click to exit',
+            rotatel: 'Rotate 90° Counterclockwise',
+            rotater: 'Rotate 90° Clockwise',
+            flipv: 'Flip Vertically',
+            fliph: 'Flip Horizontally',
+            download: 'Download Media File',
+            thumb: 'Toggle Thumbnails',
+            zoom: 'Toggle Zoom',
+            zoomin: 'Zoom in',
+            zoomout: 'Zoom out',
+            expand: 'Collapsed, click to expand sidebar',
+            collapse: 'Expanded, click to collapse sidebar'
         },
         form: {
             placeholder: 'Please enter...',
@@ -928,14 +947,14 @@
     };
 
     const getEl = (obj, wrap) => {
-        let objType = getDataType(obj), parType = getDataType(wrap), parent = parType.includes('HTML') ? wrap : document.querySelector(wrap), result = null;
+        let objType = getDataType(obj), parType = getDataType(wrap), parent = parType.includes('HTML') ? wrap : document.querySelector(wrap), root = parent && parent instanceof HTMLTemplateElement ? parent.content : parent, result = null;
         if (obj) {
             if (objType.includes('HTML')) {
                 result = obj;
             }
             else if (objType === 'String') {
                 try {
-                    result = (parent || document).querySelector(obj.trim());
+                    result = (root || document).querySelector(obj.trim());
                 }
                 catch {
                     result = null;
@@ -1051,7 +1070,7 @@
     };
 
     const getEls = (data, parent) => {
-        let type = getDataType(data), parentEl = getEl(parent) || document, result = [];
+        let type = getDataType(data), parentEl = getEl(parent), root = parentEl && parentEl instanceof HTMLTemplateElement ? parentEl.content : (parentEl || document), result = [];
         if (isEmpty(data)) {
             return result;
         }
@@ -1061,7 +1080,7 @@
         else if (type === 'String') {
             data = data.trim();
             result = data.split(',').map((k) => {
-                return [...parentEl.querySelectorAll(k)];
+                return [...root.querySelectorAll(k)];
             }).flat();
         }
         else if (type === 'Array') {
@@ -1920,7 +1939,7 @@
         },
     ];
 
-    let OCTMP_actClass = config.actClass;
+    let OCTMP_actClass$1 = config.actClass;
     const optBubble = [
         {
             attr: 'heading',
@@ -1994,7 +2013,7 @@
         {
             attr: 'act-class',
             prop: 'actClass',
-            value: OCTMP_actClass,
+            value: OCTMP_actClass$1,
         },
         {
             attr: 'tpl-str',
@@ -3702,7 +3721,62 @@
                 name: 'heighten',
                 icon: `${orca.prefix}icon-expand-v`,
                 swap: `${orca.prefix}icon-collapse-v`,
-            }
+            },
+            play: {
+                name: 'play',
+                icon: `${orca.prefix}icon-play-o`,
+                swap: `${orca.prefix}icon-pause-o`,
+            },
+            zoomin: {
+                name: 'zoomin',
+                icon: `${orca.prefix}icon-zoomin`,
+            },
+            zoomout: {
+                name: 'zoomout',
+                icon: `${orca.prefix}icon-zoomout`,
+            },
+            zoom: {
+                name: 'zoom',
+                icon: `${orca.prefix}icon-zoom`,
+            },
+            fullscr: {
+                name: 'fullscr',
+                icon: `${orca.prefix}icon-bigger`,
+                swap: `${orca.prefix}icon-smaller`,
+            },
+            flipv: {
+                name: 'flipv',
+                icon: `${orca.prefix}icon-flip-v`,
+            },
+            fliph: {
+                name: 'fliph',
+                icon: `${orca.prefix}icon-flip-h`,
+            },
+            rotatel: {
+                name: 'rotatel',
+                icon: `${orca.prefix}icon-rotate-left`,
+            },
+            rotater: {
+                name: 'rotater',
+                icon: `${orca.prefix}icon-rotate-right`,
+            },
+            download: {
+                name: 'download',
+                icon: `${orca.prefix}icon-download`,
+            },
+            share: {
+                name: 'share',
+                icon: `${orca.prefix}icon-share`,
+            },
+            thumb: {
+                name: 'thumb',
+                icon: `${orca.prefix}icon-thumb`,
+            },
+            more: {
+                name: 'more',
+                icon: `${orca.prefix}icon-plus-s`,
+                swap: `${orca.prefix}icon-minus-s`,
+            },
         }, keys = Object.keys(map), renderFn = (props) => {
             let dft = {}, arrow = props.extendable ? `<i ${orca.alias}="arrow"></i>` : '', iconStr = props.icon ? `<i class="${props.icon}" ${orca.alias}="icon"></i>` : '', diskStr = props.disk ? `<i ${orca.alias}="disk"><img src="${props.disk}"/></i>` : '', cubeStr = props.cube ? `<i ${orca.alias}="cube"><img src="${props.cube}"/></i>` : '', imageStr = props.image ? `<i ${orca.alias}="image"><img src="${props.image}"/></i>` : '', label = props.label ? `<i ${orca.alias}="label">${props.label}</i>` : '', html = iconStr + diskStr + cubeStr + imageStr + label + arrow;
             props.name && (dft[orca.alias] = props.name);
@@ -9139,6 +9213,11 @@
             this.evtTarget = null;
             this.startTime = 0;
             this.diffTime = 0;
+            this.nowVals = {
+                translate: { x: 0, y: 0 },
+                scale: { x: 1, y: 1 },
+                rotate: 0
+            };
             this.jitterClick = _this.options.jitterClick + (orca.isTouchScr ? 10 : 0);
             this.jitterTrans = _this.options.jitterTrans + (orca.isTouchScr ? 4 : 0);
             this.clickCount = 0;
@@ -9271,7 +9350,7 @@
                 paramsStart.totalTrans = _this.totalTrans;
                 paramsStart.name = 'start';
                 _this.listen({ name: 'start', params: [paramsStart] });
-                _this.options.viewport.enable && _this.getSizeDiff(_this.lastVals.translate);
+                _this.getViewportSizeDiff(_this.lastVals.translate);
                 _this.started = true;
                 _this.eventState = 'start';
             };
@@ -9477,7 +9556,7 @@
                         paramsRotate.name = 'rotated';
                         _this.listen({ name: 'rotated', params: [paramsRotate] });
                     }
-                    _this.options.viewport.enable && _this.moveVals.h > 1 && _this.getSizeDiff();
+                    _this.moveVals.h > 1 && _this.getViewportSizeDiff();
                     _this.lastVals.rotate = _this.nowVals.rotate;
                     _this.lastVals.scale = { ..._this.nowVals.scale };
                 }
@@ -9495,7 +9574,7 @@
             this.stepFn = (e, dirValue, type = 'wheel') => {
                 if (!_this.options.scale.enable && !_this.options.rotate.enable && !_this.options.translate.enable)
                     return;
-                _this.options.viewport.enable && _this.getSizeDiff();
+                _this.getViewportSizeDiff();
                 _this.getStartVals();
                 _this.options.step.duration ? _this.targetEl.style.transitionDuration = `${_this.options.step.duration}ms` : null;
                 _this.targetEl.style.transitionTimingFunction = orca.curves[_this.options.step.curve];
@@ -9631,15 +9710,15 @@
                 this.removeSecondEvents();
                 super.listen({ name: 'finished', params: [e] });
             };
-            this.transitionendFn = (e) => {
+            this.transitionendFn = debounce((e) => {
                 if (e.propertyName !== 'transform')
                     return;
                 e.stopPropagation();
-                if (this.options.viewport.enable) {
-                    this.getSizeDiff(this.nowVals.translate);
+                if (this.options.viewport.enable && this.nowVals) {
+                    this.getViewportSizeDiff(this.nowVals.translate);
                     this.rebound(this.nowVals.translate);
                 }
-            };
+            });
             this.preventDft = (e) => {
                 e?.preventDefault();
             };
@@ -9921,17 +10000,19 @@
             }
         }
         correctRangeScale() {
-            this.nowVals.scale.x = this.clampVals('scale', this.nowVals.scale.x);
-            this.nowVals.scale.y = this.clampVals('scale', this.nowVals.scale.y);
-            let tmpX = this.nowVals.scale.x + this.diffVals.scale, tmpY = this.nowVals.scale.y + this.diffVals.scale;
+            let absScale = {
+                x: this.clampVals('scale', Math.abs(this.nowVals.scale.x)),
+                y: this.clampVals('scale', Math.abs(this.nowVals.scale.y))
+            };
+            let tmpX = absScale.x + this.diffVals.scale, tmpY = absScale.y + this.diffVals.scale;
             if (tmpX >= this.options.scale.max || tmpY >= this.options.scale.max) {
-                this.diffVals.scale = Math.min((this.options.scale.max - this.nowVals.scale.x), (this.options.scale.max - this.nowVals.scale.y));
+                this.diffVals.scale = Math.min((this.options.scale.max - absScale.x), (this.options.scale.max - absScale.y));
             }
             else if (tmpX <= this.options.scale.min || tmpY <= this.options.scale.min) {
-                this.diffVals.scale = Math.min((this.options.scale.min - this.nowVals.scale.x), (this.options.scale.min - this.nowVals.scale.y));
+                this.diffVals.scale = Math.min(this.options.scale.min - absScale.x, this.options.scale.min - absScale.y);
             }
-            this.nowVals.scale.x += this.diffVals.scale;
-            this.nowVals.scale.y += this.diffVals.scale;
+            this.nowVals.scale.x += this.diffVals.scale * (this.nowVals.scale.x < 0 ? -1 : 1);
+            this.nowVals.scale.y += this.diffVals.scale * (this.nowVals.scale.y < 0 ? -1 : 1);
         }
         clampVals(prop, value) {
             return clampVal({ val: value, min: this.options[prop].min, max: this.options[prop].max });
@@ -9944,18 +10025,21 @@
                 this.stepVal = this.options.step.mode === 'translate' ? 60 : this.options.step.mode === 'scale' ? 0.5 : this.options.step.mode === 'rotate' ? 10 : 0;
             }
             else {
-                this.stepVal = this.options.step.value = 0;
+                this.stepVal = this.options.step.value;
             }
         }
-        getSizeDiff(val) {
+        getViewportSizeDiff(val) {
+            if (!this.options.viewport.enable)
+                return;
             this.sizes = {
                 viewport: { width: 0, height: 0, left: 0, right: 0, top: 0, bottom: 0 },
                 target: { width: 0, height: 0, left: 0, right: 0, top: 0, bottom: 0 },
                 diff: { x: 0, y: 0 },
                 offset: { left: 0, right: 0, top: 0, bottom: 0 }
             };
+            let tmp;
             if (!this.viewportEl || this.viewportEl === document.body || this.viewportEl === document.documentElement) {
-                this.sizes.viewport = {
+                tmp = {
                     width: document.documentElement.clientWidth,
                     height: document.documentElement.clientHeight,
                     left: 0,
@@ -9965,25 +10049,19 @@
                 };
             }
             else {
-                let tmp = this.viewportEl.getBoundingClientRect();
-                this.sizes.viewport = {
-                    width: tmp.width,
-                    height: tmp.height,
-                    left: tmp.left,
-                    top: tmp.top,
-                    right: tmp.right,
-                    bottom: tmp.bottom,
+                let temp = this.viewportEl.getBoundingClientRect();
+                tmp = {
+                    width: temp.width,
+                    height: temp.height,
+                    left: temp.left,
+                    top: temp.top,
+                    right: temp.right,
+                    bottom: temp.bottom,
                 };
             }
-            let rect = this.targetEl.getBoundingClientRect();
-            this.sizes.target = {
-                width: rect.width,
-                height: rect.height,
-                left: rect.left,
-                top: rect.top,
-                right: rect.right,
-                bottom: rect.bottom,
-            };
+            this.sizes.viewport = { ...tmp };
+            let { width, height, left, top, right, bottom } = this.targetEl.getBoundingClientRect();
+            this.sizes.target = { width, height, left, top, right, bottom };
             this.sizes.diff = { x: this.sizes.viewport.width - this.sizes.target.width, y: this.sizes.viewport.height - this.sizes.target.height };
             this.sizes.offset = {
                 left: this.sizes.viewport.left - this.sizes.target.left,
@@ -10643,6 +10721,14 @@
             dom.removeAttribute('dir');
             Reflect.deleteProperty(orca, 'rtl');
         }
+    };
+
+    const isChildVisible = (parent, child) => {
+        let pEl = getEl(parent), cEl = getEl(child, pEl);
+        if (!pEl || !cEl)
+            return false;
+        let pRect = pEl.getBoundingClientRect(), cRect = cEl.getBoundingClientRect();
+        return !(cRect.right < pRect.left || cRect.left > pRect.right || cRect.bottom < pRect.top || cRect.top > pRect.bottom);
     };
 
     class ModBaseListenCacheNest extends ModBaseListenCache {
@@ -19664,9 +19750,9 @@
             value: '',
         },
         {
-            attr: 'axis',
-            prop: 'axis',
-            value: 'y',
+            attr: 'flow',
+            prop: 'flow',
+            value: 'v',
         },
         {
             attr: 'bounce',
@@ -19930,6 +20016,8 @@
         sizeObs;
         lastSnapped;
         respThrot;
+        axis;
+        tmpTarget;
         static hostType = 'node';
         static optMaps = optScroll;
         constructor(elem, options = {}, initial = config.initial) {
@@ -19941,8 +20029,9 @@
                 component: false,
                 spread: ['snap', 'drift', 'swipe', 'bar', 'keyboard']
             });
-            this.forwardMap = propsMap[this.options.axis];
-            this.reverseMap = propsMap[this.options.axis === 'x' ? 'y' : 'x'];
+            this.axis = this.options.flow === 'v' ? 'y' : 'x';
+            this.forwardMap = propsMap[this.axis];
+            this.reverseMap = propsMap[this.axis === 'x' ? 'y' : 'x'];
             this.wrapEl = this.options.wrapper ? getEl(this.options.wrapper) : this.targetEl.firstElementChild;
             if (!this.wrapEl)
                 return this;
@@ -20032,7 +20121,7 @@
         setAttrs() {
             this.targetEl.classList.add(`${orca.prefix}scroll`);
             this.wrapEl.classList.add(`${orca.prefix}scroll-wrap`);
-            this.targetEl.setAttribute('axis', this.options.axis);
+            this.targetEl.setAttribute('flow', this.options.flow);
             this.targetEl.toggleAttribute('gridded', this.options.gridded);
             this.options.rtl ? this.targetEl.setAttribute('dir', 'rtl') : this.targetEl.removeAttribute('dir');
         }
@@ -20042,14 +20131,14 @@
                     wheel: true,
                     keyboard: {
                         enable: this.options.keyboard,
-                        prev: this.options.axis === 'x' ? (this.isRtl ? 'ArrowRight' : 'ArrowLeft') : 'ArrowUp',
-                        next: this.options.axis === 'x' ? (this.isRtl ? 'ArrowLeft' : 'ArrowRight') : 'ArrowDown',
+                        prev: this.options.flow === 'h' ? (this.isRtl ? 'ArrowRight' : 'ArrowLeft') : 'ArrowUp',
+                        next: this.options.flow === 'h' ? (this.isRtl ? 'ArrowLeft' : 'ArrowRight') : 'ArrowDown',
                         target: this.targetEl,
                     },
                     spy: this.options.keyboard,
                     step: {
                         mode: 'translate',
-                        axis: this.options.axis,
+                        axis: this.axis,
                         value: this.options.wheel.value,
                         linkage: false,
                         duration: this.options.duration,
@@ -20064,13 +20153,13 @@
                         coef: 1,
                         auto: false,
                     },
-                    initialVal: { [this.options.axis]: this.transNow },
+                    initialVal: { [this.axis]: this.transNow },
                     onStep: (data) => {
-                        this.getStepVal(data.step.direction[this.options.axis]);
+                        this.getStepVal(data.step.direction[this.axis]);
                     },
                     onStepped: (data) => {
                         this.scrollTo({
-                            target: data.translate.value[this.options.axis],
+                            target: data.translate.value[this.axis],
                             duration: this.options.duration,
                             snap: true,
                         });
@@ -20080,7 +20169,7 @@
                     },
                     onTranslating: (data) => {
                         if (data.translate.diff.h > 2) {
-                            this.transNow = data.translate.value[this.options.axis];
+                            this.transNow = data.translate.value[this.axis];
                             this.cross = this.crossLinkage();
                             if (this.cross.includes('baby')) {
                                 if (data.pointer === 'wheel')
@@ -20122,7 +20211,7 @@
                             }
                             transformTools.set({
                                 el: this.wrapEl,
-                                data: { translate: { [this.options.axis]: this.transNow } }
+                                data: { translate: { [this.axis]: this.transNow } }
                             });
                             this.handleExceedLimit({ linkage: this.cross });
                             super.listen({ name: 'move', params: [data.translate] });
@@ -20194,7 +20283,7 @@
                         },
                         onTranslating: (data) => {
                             this.locateTo({
-                                target: prog + data.translate.value[this.options.axis] / this.barSize.diff,
+                                target: prog + data.translate.value[this.axis] / this.barSize.diff,
                                 isRatio: true,
                             });
                         },
@@ -20314,12 +20403,12 @@
         }
         updateDiff() {
             let targetStyle = style(this.targetEl), wrapStyle = style(this.wrapEl), targetHeight = parseInt(targetStyle.height), wrapHeight = parseInt(wrapStyle.height), targetWidth = parseInt(targetStyle.width), wrapWidth = parseInt(wrapStyle.width), outerSize = 0, reverseSize = 0, innerSize = 0;
-            if (this.options.axis === 'x') {
+            if (this.axis === 'x') {
                 outerSize = targetWidth;
                 reverseSize = targetHeight;
                 innerSize = wrapWidth;
             }
-            else if (this.options.axis === 'y') {
+            else if (this.axis === 'y') {
                 outerSize = targetHeight;
                 reverseSize = targetWidth;
                 innerSize = wrapHeight;
@@ -20364,8 +20453,8 @@
             }
         }
         setEaseTo(data, type = 'drift') {
-            data[type].value[this.options.axis] = this.getEaseDist(data.translate.direction[this.options.axis], this.getEdgeValue(data[type].value[this.options.axis]), type);
-            let target = (this.options.snap.enable && this.options.snap.mode === 'auto') ? this.getNearestSnap(data[type].value[this.options.axis]).nearest : data[type].value[this.options.axis];
+            data[type].value[this.axis] = this.getEaseDist(data.translate.direction[this.axis], this.getEdgeValue(data[type].value[this.axis]), type);
+            let target = (this.options.snap.enable && this.options.snap.mode === 'auto') ? this.getNearestSnap(data[type].value[this.axis]).nearest : data[type].value[this.axis];
             this.scrollTo({
                 target,
                 snap: true,
@@ -20427,7 +20516,7 @@
                 return value;
             let dataType = getDataType(data);
             if (dataType.includes('HTML') || dataType === 'String') {
-                let el = getEl(data);
+                let el = getEl(data, this.targetEl);
                 el && (value -= this.getChildParentOffset(el));
             }
             else {
@@ -20601,12 +20690,13 @@
             if (this.destroyed || this.wrapEl.children.length === 0 || !this.options.snap.enable)
                 return this;
             this.scrolled = false;
-            let opt = Object.assign({ force: this.options.snap.force }, options), current = this.getNearestSnap(), snappeds = current.snappeds, nearest = current.nearest, toEl = opt.target ? getEl(opt.target, this.wrapEl) : null, target = toEl || nearest;
+            let opt = Object.assign({ force: this.options.snap.force }, options), current = this.getNearestSnap(), snappeds = current.snappeds, nearest = current.nearest, toEl = opt.target ? getEl(opt.target, this.wrapEl) : null, target = this.tmpTarget || toEl || nearest;
             if (!nearest || !target)
                 return this;
             if (target !== this.snapped || opt.force) {
                 this.toggleSnappedAttr(target, snappeds);
                 super.listen({ name: 'snap', cb: opt.before, params: [target] });
+                this.tmpTarget = null;
             }
             this.scrollTo({
                 target,
@@ -20631,12 +20721,12 @@
             if (this.destroyed)
                 return this;
             this.scrolled = false;
-            let trans = this.getEdgeValue(target, isRatio);
+            let trans = this.getEdgeValue(this.tmpTarget || target, isRatio);
             if (this.transNow === trans)
                 return;
             let now = this.transNow, compare = Math.abs(this.transNow - trans) / this.targetSize, dur = duration || duration == 0 ? duration : Math.trunc(this.options.duration * compare);
             this.wrapEl.style.transitionDuration = clampVal({ val: dur, min: 200, max: 2000 }) + 'ms';
-            transformTools.set({ el: this.wrapEl, data: { translate: { [this.options.axis]: trans } } });
+            transformTools.set({ el: this.wrapEl, data: { translate: { [this.axis]: trans } } });
             super.listen({ name: 'scroll', cb: before, params: [trans, now] });
             this.transLast = this.transNow = trans;
             delay({
@@ -20647,23 +20737,25 @@
                     }
                     super.listen({ name: 'scrolled', cb: after, params: [trans, now] });
                     this.scrolled = true;
+                    this.tmpTarget = null;
                 }
             });
         }
         locateTo({ target = this.transNow, before, after, snap = false, isRatio = false }) {
             if (this.destroyed)
                 return this;
-            let trans = this.getEdgeValue(target, isRatio);
+            let trans = this.getEdgeValue(this.tmpTarget || target, isRatio);
             if (this.transNow === trans)
                 return;
             let now = this.transNow;
             this.wrapEl.style.transitionDuration = '0ms';
-            transformTools.set({ el: this.wrapEl, data: { translate: { [this.options.axis]: trans } } });
+            transformTools.set({ el: this.wrapEl, data: { translate: { [this.axis]: trans } } });
             super.listen({ name: 'locate', cb: before, params: [trans, now] });
             this.transLast = this.transNow = trans;
             if (this.options.snap.enable) {
                 snap ? this.setSnapped() : this.getNearestSnap();
             }
+            this.tmpTarget = null;
             super.listen({ name: 'located', cb: after, params: [trans, now] });
         }
         
@@ -20895,9 +20987,9 @@
     let OCTMP_hyphen$2 = config.splitHyphen;
     const optSwipe = [
         {
-            attr: 'axis',
-            prop: 'axis',
-            value: 'x',
+            attr: 'flow',
+            prop: 'flow',
+            value: 'h',
         },
         {
             attr: 'keyboard',
@@ -20998,6 +21090,16 @@
             value: {},
         },
         {
+            attr: 'height',
+            prop: 'height',
+            value: 0,
+        },
+        {
+            attr: 'width',
+            prop: 'width',
+            value: 0,
+        },
+        {
             attr: 'tools',
             prop: 'tools',
             value: {
@@ -21012,7 +21114,8 @@
             value: {
                 enable: false,
                 placement: 'right-top',
-                hyphen: '/',
+                format: `<i></i><s>/</s><u></u>`,
+                selector: '',
             },
         },
         {
@@ -21046,6 +21149,28 @@
                     classes: '',
                     text: '',
                 },
+            },
+        },
+        {
+            attr: 'thumb',
+            prop: 'thumb',
+            value: {
+                content: null,
+                type: 'swipe',
+                attribute: 'selected',
+                mode: 'scroll',
+            },
+        },
+        {
+            attr: 'zoom',
+            prop: 'zoom',
+            value: {
+                enable: false,
+                step: 0.5,
+                min: 0,
+                max: 10,
+                value: 2,
+                selector: '',
             },
         },
         {
@@ -21116,18 +21241,23 @@
             value: '',
         },
         {
-            attr: 'on-fold',
-            prop: 'onFold',
+            attr: 'on-prepared',
+            prop: 'onPrepared',
             value: null,
         },
         {
-            attr: 'on-unfold',
-            prop: 'onUnfold',
+            attr: 'on-changed',
+            prop: 'onChanged',
             value: null,
         },
         {
-            attr: 'on-updatedcont',
-            prop: 'onUpdatedCont',
+            attr: 'on-paused',
+            prop: 'onPaused',
+            value: null,
+        },
+        {
+            attr: 'on-played',
+            prop: 'onPlayed',
             value: null,
         },
         ...optBase
@@ -21923,7 +22053,7 @@
         nextEl;
         totalEl;
         numEl;
-        denomEl;
+        denEl;
         bullets;
         bulletSeq;
         interval;
@@ -21939,6 +22069,13 @@
         slideSizeDivide;
         slides;
         totalClone;
+        thumbIns;
+        thumbs;
+        setSnapEvt;
+        zoomIns;
+        canZoom;
+        snapSlider;
+        prepared;
         static hostType = 'node';
         static optMaps = optSwipe;
         constructor(elem, options = {}, initial = true) {
@@ -21948,7 +22085,7 @@
                 maps: Swipe.optMaps,
                 host: elem,
                 component: true,
-                spread: ['autoplay', 'total', 'tools', 'pgn', 'nav', 'centered']
+                spread: ['autoplay', 'total', 'tools', 'pgn', 'nav', 'centered', 'zoom']
             });
             this.countdownEl = createEl('div');
             this.intervalEvt = () => {
@@ -21958,12 +22095,15 @@
             this.startClone = [];
             this.endClone = [];
             this.sliderTpl = { label: '', content: '', thumb: '', brief: '', slider: null, cb: null };
+            this.snapSlider = {};
             this.prepareListen = throttle(() => {
                 this.fillWedgets();
                 this.setBulletActive(this.bullets.find((k) => this.actIdx === k.index) || 0);
                 this.toggleNavDisabled();
                 this.targetEl.classList.remove(`${orca.prefix}initiating`);
                 this.setAutoPlay();
+                this.prepared = true;
+                super.listen({ name: 'prepared' });
             });
             this.resetListener = throttle(() => {
                 this.getSingleSize();
@@ -21979,6 +22119,11 @@
                 let other = this.bullets.find((k) => k !== bullet && k.active);
                 other && Reflect.deleteProperty(other, 'active');
                 
+            };
+            let _this = this;
+            this.setSnapEvt = function () {
+                let idx = _this.thumbs.findIndex((k) => k === this);
+                _this[_this.options.thumb.mode === 'locate' ? 'toLocate' : 'toSnap'](idx);
             };
             super.listen({ name: 'constructed' });
             if (initial) {
@@ -22018,6 +22163,7 @@
             this.appendSliders();
             this.group = clampVal({ val: this.options.group, min: 0, max: this.sliders.length });
             this.setScroll();
+            this.getThumbSlides();
             super.listen({ name: 'initiated', cb });
             return this;
         }
@@ -22025,6 +22171,8 @@
         
         setAttrs() {
             classes(this.targetEl).add(`${orca.prefix}swipe,${orca.prefix}initiating`);
+            this.options.width && (this.targetEl.style.width = (isNaN(this.options.width) ? this.options.width : this.options.width + 'px'));
+            this.options.height && (this.targetEl.style.height = (isNaN(this.options.height) ? this.options.height : this.options.height + 'px'));
         }
         getDriftParams() {
             if (this.group)
@@ -22041,12 +22189,88 @@
         getWheelVal() {
             return this.options.divide * (this.group ? 1 : this.options.wheel);
         }
+        getZoomEl(data) {
+            let tmp = getEl(this.options.zoom.selector, data.slider);
+            return this.options.zoom.selector ? tmp : data.slider.firstElementChild;
+        }
+        setZoomVal(slider, value = this.options.zoom.value) {
+            if (!slider.zoomEl)
+                return;
+            slider.zoomEl.style.transitionDuration = `var(--${orca.prefix}dur-3)`;
+            slider.zoomEl.style.transitionTimingFunction = `var(--${orca.prefix}bez-eo)`;
+            slider.zoomIns.nowVals.translate = { ...slider.rawTrans.translate };
+            transformTools.set({
+                el: slider.zoomEl,
+                data: { scale: value, translate: slider.zoomIns.nowVals.translate }
+            });
+        }
+        enableZoom() {
+            if (!this.options.zoom.enable)
+                return;
+            this.scrollIns.gestureIns.on('dblclick', (data) => {
+                let slider = this.sliders.find((k) => k.slider.contains(data.evtTarget)), target = this.getZoomEl(slider);
+                if (!target)
+                    return;
+                this.enable2Init(slider);
+                this.setZoomVal(slider, this.options.zoom.value);
+            });
+        }
+        enable2Init(slider, zoomEl) {
+            if (!this.options.zoom.enable)
+                return;
+            if (!slider.zoomIns) {
+                slider.zoomEl = zoomEl || this.getZoomEl(slider);
+                this.setZoomIns(slider);
+            }
+            else {
+                slider.zoomIns.destroyed && slider.zoomIns.init();
+            }
+        }
+        toggleZoom(parent = this.snapSlider, toSet = true) {
+            let scaleVal = transformTools.get(parent.zoomEl, ['scale']).scale.x, setVal = scaleVal < parent.rawTrans.scale.x || scaleVal === this.options.zoom.value ? parent.rawTrans.scale.x : this.options.zoom.value;
+            toSet && this.setZoomVal(parent, setVal);
+            setVal === parent.rawTrans.scale.x && parent.zoomIns.destroy();
+        }
+        setZoomIns(parent) {
+            parent.rawTrans = transformTools.get(parent.zoomEl, ['translate', 'scale', 'rotate']);
+            parent.zoomIns = new Gesture(parent.zoomEl, {
+                step: {
+                    mode: 'scale',
+                    value: this.options.zoom.step,
+                },
+                wheel: true,
+                scale: {
+                    enable: true,
+                    min: this.options.zoom.min || parent.rawTrans.scale.x,
+                    max: this.options.zoom.max,
+                },
+                viewport: {
+                    enable: true,
+                    selector: parent.slider,
+                },
+                onDblclick: (data) => {
+                    this.toggleZoom(parent);
+                },
+                onScaling: (data) => {
+                    transformTools.set({
+                        el: data.target,
+                        data: { scale: data.scale.value }
+                    });
+                },
+                onTranslating: (data) => {
+                    transformTools.set({
+                        el: data.target,
+                        data: { translate: data.translate.value }
+                    });
+                }
+            });
+        }
         setScroll() {
             this.scrollOpt = extend({
                 target: {
                     wrapper: this.wrapEl,
                     gridded: this.options.divide > 1 ? true : false,
-                    axis: this.options.axis,
+                    flow: this.options.flow,
                     keyboard: this.options.keyboard,
                     snap: {
                         enable: true,
@@ -22070,17 +22294,37 @@
                     onPrepared: this.prepareListen,
                     onRefactored: this.resetListener,
                     onResized: this.resetListener,
+                    onInitiated: () => {
+                        this.enableZoom();
+                    },
                     onSnap: (slider) => {
+                        this.actIdx = Math.max(this.sliders.findIndex((k) => k.slider === slider), 0);
                         if (this.scrollIns.initialResize) {
-                            this.actIdx = this.sliders.findIndex((k) => k.slider === slider);
                             this.setBulletActive(slider);
                         }
-                        (this.options.autoHeight && this.options.axis === 'x') && (this.targetEl.style.height = style(slider).height);
+                        (this.options.autoHeight && this.options.flow === 'h') && (this.targetEl.style.height = style(slider).height);
+                        if (this.thumbs.length) {
+                            this.thumbIns && !isChildVisible(this.thumbIns.targetEl, this.thumbIns.sliders[this.actIdx].slider) && this.thumbIns.toSnap(this.actIdx);
+                            for (let [i, k] of this.thumbs.entries())
+                                k.toggleAttribute(this.options.thumb.attribute, this.actIdx !== i ? false : true);
+                        }
+                        for (let k of this.sliders) {
+                            if (k.slider !== slider) {
+                                if (k.zoomIns) {
+                                    transformTools.get(k.zoomEl, ['scale']).scale.x !== 1 && this.setZoomVal(k, 1);
+                                    k.zoomIns.destroy();
+                                }
+                                for (let i of getEls('video,audio', k.slider))
+                                    i.pause();
+                            }
+                        }
+                        this.snapSlider = this.sliders[this.actIdx];
+                        super.listen({ name: 'changed', params: [this.snapSlider, this.actIdx] });
                     },
                     onSnapped: (slider) => {
                     },
                     onMove: () => {
-                        this.pause(true);
+                        this.autoPause(true);
                     }
                 },
                 source: this.options.scroll
@@ -22204,6 +22448,69 @@
             });
             this.bullets = this.bulletsObs.proxy;
         }
+        getThumbSlides(ins = this.options.thumb.content) {
+            this.thumbs = [];
+            if (this.options.thumb.type === 'dom') {
+                let tmp = getEl(this.options.thumb.content);
+                tmp && (this.thumbs = [...tmp.children]);
+            }
+            else if (this.options.thumb.type === 'dom') {
+                let isArr = Array.isArray(this.options.thumb.content);
+                if (isArr) {
+                    this.thumbs = this.options.thumb.content;
+                }
+                else {
+                    let tmp = getEls(this.options.thumb.content);
+                    this.thumbs = tmp;
+                }
+            }
+            else if (['step', 'pill'].includes(this.options.thumb.type)) {
+                let tmp = getEl(this.options.thumb.content);
+                tmp && (this.thumbs = tmp.content.map((k) => k.wrapEl));
+            }
+            else if (this.options.thumb.type === 'swipe') {
+                let type = getDataType(ins), getInsFromDom = (dom) => {
+                    let tmp = instance.data.find((k) => k.type = k.ins.targetEl === dom);
+                    return tmp ? tmp.ins : null;
+                };
+                if (type.includes('HTML')) {
+                    this.thumbs = getEls('li', ins);
+                    this.thumbIns = getInsFromDom(ins);
+                }
+                else if (type === 'Instance') {
+                    this.thumbIns = ins;
+                    this.thumbs = ins.sliders.map((k) => k.slider);
+                }
+                else if (type === 'String') {
+                    let tmp = getEl(ins);
+                    if (tmp) {
+                        this.thumbIns = getInsFromDom(tmp);
+                        this.thumbs = getEls('li', ins);
+                    }
+                    else {
+                        this.thumbIns = instance.find(ins, 'swipe');
+                        this.thumbIns && (this.thumbs = ins.sliders.map((k) => k.slider));
+                    }
+                }
+            }
+            this.thumbs = this.thumbs.filter((k) => k && getDataType(k).includes('HTML'));
+            if (!this.thumbs.length)
+                return;
+            if (this.thumbIns) {
+                this.thumbIns.on('prepared', () => {
+                    this.thumbIns.scrollIns.gestureIns.on('click', (data) => {
+                        let tmp = this.thumbs.find((k) => k.contains(data.evtTarget));
+                        tmp && this.setSnapEvt.call(tmp);
+                    });
+                });
+            }
+            else {
+                for (let k of this.thumbs) {
+                    k.removeEventListener('click', this.setSnapEvt);
+                    k.addEventListener('click', this.setSnapEvt, false);
+                }
+            }
+        }
         findPrevNextBullet(data) {
             let item = this.findBullet(data);
             if (!item)
@@ -22253,22 +22560,20 @@
                 this.sliders.forEach((k) => {
                     this.setSingleSize(k);
                 });
-                this.updateGap();
             }
+            this.updateGap();
         }
         updateGap() {
-            if (this.options.slides > 0) {
-                if (this.options.divide > 1) {
-                    this.sliders.forEach((k, i) => {
-                        this.setSingleGap(k, i);
+            if (this.options.divide > 1) {
+                this.sliders.forEach((k, i) => {
+                    this.setSingleGap(k, i);
+                });
+            }
+            else {
+                if (this.options.gap > 0) {
+                    this.sliders.forEach((k) => {
+                        this.setSingleGap(k);
                     });
-                }
-                else {
-                    if (this.options.gap > 0) {
-                        this.sliders.forEach((k) => {
-                            this.setSingleGap(k);
-                        });
-                    }
                 }
             }
         }
@@ -22304,9 +22609,9 @@
             return places > 3 ? toNumber(value + (higher ? 0.1 : 0), { mode: higher ? 'ceil' : 'floor', places: 1 }) : value;
         }
         getSingleSize() {
-            if (!(this.options.slides > 0))
-                return;
-            this.slideSize = this.getAccuracy(this.scrollIns.childAvgSize, this.scrollIns.gap > 0 ? false : true);
+            if (this.options.slides > 0) {
+                this.slideSize = this.getAccuracy(this.scrollIns.childAvgSize, this.scrollIns.gap > 0 ? false : true);
+            }
             if (this.options.divide > 1) {
                 let netValueDivide = this.scrollIns.reverseSize - this.scrollIns.gap * (this.options.divide - 1), singleValueDivide = netValueDivide / this.options.divide;
                 this.slideSizeDivide = this.getAccuracy(singleValueDivide, this.scrollIns.gap > 0 ? false : true);
@@ -22318,8 +22623,6 @@
             item.slider.style[this.scrollIns.forwardMap.size] = this.slideSize + 'px';
         }
         setSingleGap(item, index) {
-            if (!(this.options.slides > 0))
-                return;
             let idx = isNull(index) ? this.sliders.findIndex((k) => k === item) : index;
             if (this.options.divide > 1) {
                 item.slider.style[this.scrollIns.reverseMap.size] = this.getAccuracy(this.slideSizeDivide, false) + 'px';
@@ -22414,23 +22717,24 @@
             if (!this.options.total.enable)
                 return false;
             if (!value.bullets) {
-                this.numEl.innerHTML = this.denomEl.innerHTML = 0;
+                this.numEl.innerHTML = this.denEl.innerHTML = 0;
             }
             else {
                 this.numEl.innerHTML = value.curBullet + 1;
-                this.denomEl.innerHTML = value.bullets;
+                this.denEl.innerHTML = value.bullets;
             }
         }
         fillTotal() {
             if (!this.options.total.enable)
                 return false;
             let total = this.getTotal();
-            this.totalEl = createEl('span', { class: `${orca.prefix}swipe-total` }, `<i></i><s>${this.options.total.hyphen}</s><u></u>`);
+            this.totalEl = createEl('span', { class: `${orca.prefix}swipe-total` }, this.options.total.format);
             this.numEl = this.totalEl.querySelector('i');
-            this.denomEl = this.totalEl.querySelector('u');
+            this.denEl = this.totalEl.querySelector('u');
             this.updateTotal(total);
             this.options.total.placement && this.totalEl.setAttribute('placement', this.options.total.placement);
-            this.targetEl.appendChild(this.totalEl);
+            let tmp = getEl(this.options.total.selector);
+            (tmp || this.targetEl).appendChild(this.totalEl);
         }
         getTotal() {
             return { curSlider: this.actIdx, sliders: this.sliders.length, curBullet: this.bullets.findIndex((k) => k.active), bullets: this.bullets.length };
@@ -22439,20 +22743,21 @@
             if (!this.options.nav.enable)
                 return false;
             let addNav = (type) => {
-                let result = null, text = (type === 'prev') ? (this.options.axis === 'x' ? `${orca.prefix}icon-left` : `${orca.prefix}icon-up`) :
-                    (type === 'next') ? (this.options.axis === 'x' ? `${orca.prefix}icon-right` : `${orca.prefix}icon-down`) : '', className = `${orca.prefix}swipe-${type}`, el = getEl(`.${className}`, this.targetEl);
+                let result = null, text = (type === 'prev') ? (this.options.flow === 'h' ? `${orca.prefix}icon-left` : `${orca.prefix}icon-up`) :
+                    (type === 'next') ? (this.options.flow === 'h' ? `${orca.prefix}icon-right` : `${orca.prefix}icon-down`) : '', className = `${orca.prefix}swipe-${type}`, el = getEl(`.${className}`, this.targetEl);
                 if (el) {
                     result = el;
+                    result.classList.add(`${text}`);
                 }
                 else if (this.options.nav[type].selector) {
                     result = getEl(this.options.nav[type].selector);
+                    result && result.classList.contains(`${orca.prefix}swipe-${type}`) && result.classList.add(`${text}`);
                 }
                 else {
                     result = createEl('i', { class: `${className} ${text}` });
                     this.navEl ? this.navEl.appendChild(result) : this.targetEl.appendChild(result);
                 }
                 if (result) {
-                    result.classList.add(`${text}`);
                     this.options.nav[type].classes && classes(result).add(this.options.nav[type].classes);
                     this.options.nav.classes && classes(result).add(this.options.nav.classes);
                     this.options.nav.fill && result.setAttribute('filled', '');
@@ -22595,14 +22900,14 @@
             let dataType = getDataType(data), result;
             if (dataType === 'Number') {
                 let tmp = this.sliders[data];
-                result = tmp && this.scrollIns.snappeds.includes(tmp.slider) ? tmp : null;
+                result = tmp && this.scrollIns.snappeds.includes(tmp.slider) ? tmp.slider : null;
             }
             else if (dataType.includes('HTML') || dataType === 'String') {
                 let tmp = getEl(data, this.wrapEl);
                 result = tmp && this.scrollIns.snappeds.includes(tmp) ? tmp : null;
             }
             else if (dataType === 'Object' && data.hasOwnProperty('slider')) {
-                result = this.scrollIns.snappeds.includes(data.slider) ? data : null;
+                result = this.scrollIns.snappeds.includes(data.slider) ? data.slider : null;
             }
             return result;
         }
@@ -22662,6 +22967,23 @@
             if (!target || this.scrollIns.snapped === target)
                 return;
             this.scrollIns.scrollTo({
+                target,
+                snap: true,
+                before: () => {
+                    opt.before && opt.before.call(this, target);
+                },
+                after: () => {
+                    opt.after && opt.after.call(this, target);
+                }
+            });
+        }
+        toLocate(data, opt = {}) {
+            if (this.destroyed)
+                return;
+            let target = this.findSnap(data);
+            if (!target || this.scrollIns.snapped === target)
+                return;
+            this.scrollIns.locateTo({
                 target,
                 snap: true,
                 before: () => {
@@ -22759,11 +23081,11 @@
                             label: false,
                             type: 'circle',
                             curve: 'linear',
-                            size: 'xxs',
+                            width: 'xxs',
                             control: true,
                             duration: this.options.autoplay.delay,
                             onPause: () => {
-                                this.pause();
+                                this.autoPause();
                             },
                             onContinue: (resp) => {
                                 this.continue(resp.durRest);
@@ -22777,14 +23099,14 @@
                 }
                 this.targetEl.appendChild(this.countdownEl);
             }
-            this.play();
+            this.autoPlay();
         }
         continue(duration) {
             delay({
                 duration,
                 done: () => {
                     this.toNextBullet(() => {
-                        this.play();
+                        this.autoPlay();
                     });
                 }
             });
@@ -22792,27 +23114,39 @@
         play(delay, cb) {
             if (this.destroyed || !this.paused)
                 return;
-            if (!this.options.autoplay.enable)
-                return;
             this.interval && clearInterval(this.interval);
             this.interval = setInterval(this.intervalEvt, delay || this.options.autoplay.delay);
-            this.startCountdown();
             this.paused = false;
-            super.listen({ name: 'play', cb });
+            super.listen({ name: 'played', cb });
             return this;
         }
-        pause(clear = false, cb) {
+        pause(cb) {
+            if (this.destroyed || this.paused)
+                return;
+            clearInterval(this.interval);
+            this.paused = true;
+            super.listen({ name: 'paused', cb });
+            return this;
+        }
+        autoPlay(delay, cb) {
+            if (this.destroyed || !this.paused)
+                return;
+            if (!this.options.autoplay.enable)
+                return;
+            this.play(delay, cb);
+            this.startCountdown();
+            return this;
+        }
+        autoPause(clear = false, cb) {
             if (this.destroyed || this.paused)
                 return;
             if (!this.options.autoplay.enable)
                 return;
-            clearInterval(this.interval);
+            this.pause(cb);
             if (clear && this.countdownIns) {
                 this.countdownEl.remove();
                 this.countdownIns.destroy();
             }
-            this.paused = true;
-            super.listen({ name: 'pause', cb });
             return this;
         }
         async add(data, options) {
@@ -22866,6 +23200,8 @@
                     k.el.onclick = null;
                 });
             }
+            for (let k of this.thumbs)
+                k.removeEventListener('click', this.setSnapEvt);
             this.destroyed = true;
             super.listen({ name: 'destroyed', cb });
             return this;
@@ -22930,13 +23266,28 @@
             value: 'src',
         },
         {
+            attr: 'trigger',
+            prop: 'trigger',
+            value: 'ing',
+        },
+        {
             attr: 'spy',
             prop: 'spy',
             value: {},
         },
         {
+            attr: 'on-showing',
+            prop: 'onShowing',
+            value: null,
+        },
+        {
             attr: 'on-shown',
             prop: 'onShown',
+            value: null,
+        },
+        {
+            attr: 'on-trigger',
+            prop: 'onTrigger',
             value: null,
         },
         ...optBase
@@ -22984,46 +23335,47 @@
                 target: {
                     root: this.options.root,
                     repeat: false,
-                    onShown: async () => {
-                        super.listen({ name: 'showing', params: [this.targetEl] });
-                        if (this.resType === 'src') {
-                            this.targetEl.src = this.options.content;
-                            if (['VIDEO', 'AUDIO'].includes(this.nodeName)) {
-                                this.targetEl.onloadeddata = this.removeAttrFn;
-                            }
-                            else if (['IMG', 'IFRAME'].includes(this.nodeName)) {
-                                this.targetEl.onload = this.removeAttrFn;
-                            }
-                            else {
-                                this.removeAttrFn();
-                            }
-                        }
-                        else if (this.resType === 'async') {
-                            await getContent.call(this, {
-                                content: this.options.content,
-                                contType: this.options.contType || 'async',
-                                contData: this.options.contData,
-                                ajax: Object.assign({ target: this.targetEl }, this.options.ajax),
-                                hyphen: this.options.hyphen,
-                                cb: (data) => {
-                                    setContent({
-                                        target: this.targetEl,
-                                        content: data,
-                                        template: this.options.tplStr,
-                                        engine: this.options.tplEng,
-                                    });
-                                    this.targetEl.removeAttribute('lazy-async');
-                                    this.targetEl.removeAttribute('lazy-type');
-                                    this.targetEl.removeAttribute('lazy-data');
-                                    this.targetEl.removeAttribute('lazy-tpl');
-                                    super.listen({ name: 'shown', params: [this.targetEl] });
-                                }
-                            });
-                        }
-                    },
                 },
                 source: this.options.spy
             }));
+            this.spyIns.on(this.options.trigger === 'ed' ? 'shown' : 'in', async () => {
+                super.listen({ name: 'showing', params: [this.targetEl] });
+                if (this.resType === 'src') {
+                    this.targetEl.src = this.options.content;
+                    if (['VIDEO', 'AUDIO'].includes(this.nodeName)) {
+                        this.targetEl.onloadeddata = this.removeAttrFn;
+                    }
+                    else if (['IMG', 'IFRAME'].includes(this.nodeName)) {
+                        this.targetEl.onload = this.removeAttrFn;
+                    }
+                    else {
+                        this.removeAttrFn();
+                    }
+                }
+                else if (this.resType === 'async') {
+                    await getContent.call(this, {
+                        content: this.options.content,
+                        contType: this.options.contType || 'async',
+                        contData: this.options.contData,
+                        ajax: Object.assign({ target: this.targetEl }, this.options.ajax),
+                        hyphen: this.options.hyphen,
+                        cb: (data) => {
+                            setContent({
+                                target: this.targetEl,
+                                content: data,
+                                template: this.options.tplStr,
+                                engine: this.options.tplEng,
+                            });
+                            this.targetEl.removeAttribute('lazy-async');
+                            this.targetEl.removeAttribute('lazy-type');
+                            this.targetEl.removeAttribute('lazy-data');
+                            this.targetEl.removeAttribute('lazy-tpl');
+                            super.listen({ name: 'shown', params: [this.targetEl] });
+                        }
+                    });
+                }
+                super.listen({ name: 'trigger', params: [this.targetEl] });
+            });
             super.listen({ name: 'initiated', cb });
             return this;
         }
@@ -33452,6 +33804,851 @@
         }
     }
 
+    let OCTMP_actClass = config.actClass;
+    const optViewer = [
+        {
+            attr: 'target',
+            prop: 'target',
+            value: ''
+        },
+        {
+            attr: 'auto-idx',
+            prop: 'autoIdx',
+            value: false,
+        },
+        {
+            attr: 'content',
+            prop: 'content',
+            value: '',
+        },
+        {
+            attr: 'gallery',
+            prop: 'gallery',
+            value: true,
+        },
+        {
+            attr: 'autoplay',
+            prop: 'autoplay',
+            value: false,
+        },
+        {
+            attr: 'thumb',
+            prop: 'thumb',
+            value: {
+                enable: false,
+                show: true,
+                placement: 'bottom',
+                size: 70,
+                gap: 8,
+                divide: 1,
+            }
+        }, {
+            attr: 'aside',
+            prop: 'aside',
+            value: {
+                enable: false,
+                expanded: true,
+                placement: 'end',
+                title: '',
+                closable: true,
+                delay: 0,
+                getter: null,
+                template: '',
+                engine: renderTpl,
+            }
+        },
+        {
+            attr: 'mode',
+            prop: 'mode',
+            value: 'fixed',
+        },
+        {
+            attr: 'inverted',
+            prop: 'inverted',
+            value: false,
+        },
+        {
+            attr: 'width',
+            prop: 'width',
+            value: 0,
+        },
+        {
+            attr: 'height',
+            prop: 'height',
+            value: 0,
+        },
+        {
+            attr: 'swipe',
+            prop: 'swipe',
+            value: {},
+        },
+        {
+            attr: 'active',
+            prop: 'active',
+            value: 0,
+        },
+        {
+            attr: 'z-index',
+            prop: 'zIndex',
+            value: 0,
+        },
+        {
+            attr: 'tools',
+            prop: 'tools',
+            value: {
+                enable: true,
+                children: ['close'],
+            }
+        },
+        {
+            attr: 'total',
+            prop: 'total',
+            value: {
+                enable: true,
+                format: '',
+            }
+        },
+        {
+            attr: 'act-class',
+            prop: 'actClass',
+            value: OCTMP_actClass,
+        },
+        {
+            attr: 'cont-type',
+            prop: 'contType',
+            value: 'text',
+        },
+        {
+            attr: 'cont-data',
+            prop: 'contData',
+            value: {},
+        },
+        {
+            attr: 'ajax',
+            prop: 'ajax',
+            value: {},
+        },
+        {
+            attr: 'on-changed',
+            prop: 'onChanged',
+            value: null,
+        },
+        {
+            attr: 'on-filledaside',
+            prop: 'onFilledAside',
+            value: null,
+        },
+        ...optBase
+    ];
+
+    const init = (type, parent) => {
+        let parentEl = getEl(parent) || document.body, evalFn = new Function('el', 'module', `"use strict";try {return new module(el)} catch {return null}`), moduleNodeMaps = [], setProp = (node, module) => {
+            storeNode(node)?.addModule(module);
+        }, getUsableModules = () => {
+            let result = [];
+            for (let [key, value] of Object.entries(orca)) {
+                value?.hostType === 'node' ? result.push(key) : null;
+            }
+            return result;
+        }, getNodeList = (types) => {
+            let allModules = getUsableModules(), modules = !isEmpty(types) ? types.filter(k => allModules.includes(k)) : allModules, modulesNodes = modules.map(k => {
+                let nodes = getEls(`[oc-${k}]`, parentEl).filter((i) => !i.orca || (i.orca && !i.orca[k]));
+                return nodes.map((i) => { return { module: k, node: i }; });
+            });
+            return modulesNodes;
+        }, activeFn = (obj) => {
+            if (['Dialog', 'Drawer', 'Popup'].includes(obj.module)) {
+                higherParent(obj.module, obj.node);
+            }
+            else {
+                let ins = evalFn(obj.node, orca[obj.module]);
+                ins ? setProp(obj.node, obj.module) : null;
+            }
+        }, higherParent = (module, node) => {
+            let eachInstance = (host, parent) => {
+                let ins = evalFn(host, orca[module]), children;
+                if (ins) {
+                    host[module] = true;
+                    parent ? ins.targetEl.style.zIndex = parseInt(getComputedStyle(parent.targetEl).zIndex) + 1 : null;
+                    children = getEls(`[oc-${module}]`, ins.contEl);
+                    if (children.length > 0) {
+                        for (let k of children)
+                            eachInstance(k, ins);
+                    }
+                }
+            };
+            eachInstance(node);
+        };
+        if (!isEmpty(type)) {
+            let moduleType = getDataType(type), types;
+            types = (moduleType === 'String') ? [type] :
+                (moduleType === 'Array') ? type : [];
+            moduleNodeMaps = types.length > 0 ? getNodeList(types) : [];
+        }
+        else {
+            moduleNodeMaps = getNodeList();
+        }
+        let flatArr = moduleNodeMaps.flat();
+        if (flatArr.length) {
+            decompTask({
+                tasks: flatArr,
+                count: 4,
+                type: 'idle',
+                done: () => {
+                    console.info(`Initialization finished, all tasks of orcaui are done!`);
+                },
+                run: (task) => activeFn(task),
+            });
+        }
+        if (isEmpty(type) || type?.includes('lazy')) {
+            let lazySrcs = getEls('[lazy-src]', parentEl), lazyAsyncs = getEls('[lazy-async]', parentEl);
+            for (let k of lazySrcs) {
+                (k.getAttribute('lazy-src'), k?.orca?.lazy);
+                if (k?.orca?.lazy)
+                    continue;
+                new Lazy(k, {
+                    content: k.getAttribute('lazy-src'),
+                    type: 'src'
+                });
+            }
+            for (let k of lazyAsyncs) {
+                if (k?.orca?.lazy)
+                    continue;
+                new Lazy(k, {
+                    content: k.getAttribute('lazy-async'),
+                    contType: k.getAttribute('lazy-type'),
+                    contData: strToJson(k.getAttribute('lazy-data')),
+                    tplStr: k.getAttribute('lazy-tpl'),
+                    type: 'async'
+                });
+            }
+        }
+        if (isEmpty(type) || type?.includes('viewer')) {
+            let viewers = getEls('[oc-viewer]', parentEl), viewerData = [];
+            for (let k of viewers) {
+                let options = attrToJson(k, 'oc-viewer'), name = options.insName, child = getEl(`[src]`, k), node = k.hasAttribute('src') ? k : child, nodename = node?.nodeName?.toLocaleLowerCase() || '', caption = node?.getAttribute('alt') || node?.getAttribute('title') || '', type = ['video', 'audio', 'iframe'].includes(nodename) ? nodename : 'image', tmp = node ? { media: node.getAttribute('src'), caption, type } : '', content = [options.content || tmp].flat();
+                options.content = content;
+                options.target = [];
+                if (!name) {
+                    options.content = content;
+                    options.target.push(k);
+                }
+                else {
+                    let existObj = viewerData.find((k) => k.name === name), idx = 0;
+                    if (existObj) {
+                        Reflect.deleteProperty(options, 'content');
+                        Reflect.deleteProperty(options, 'target');
+                        deepMerge(existObj, options);
+                        idx = existObj.options.content.length;
+                        storeNode(k).addData('viewer', idx);
+                        existObj.options.target.push(k);
+                        existObj.options.content.push(...content);
+                    }
+                    else {
+                        options.target.push(k);
+                    }
+                    storeNode(k).addData('viewer', idx);
+                }
+                viewerData.push({ name, options });
+            }
+            for (let k of viewerData)
+                new Viewer(k.options);
+        }
+        return orca;
+    };
+
+    class Viewer extends ModBaseListen {
+        data;
+        maskEl;
+        headEl;
+        totalEl;
+        toolsEl;
+        bodyEl;
+        stageEl;
+        thumbEl;
+        footEl;
+        viewerEl;
+        hideEvt;
+        shown;
+        stageIns;
+        thumbIns;
+        showEvt;
+        targetEls;
+        locateIdx;
+        asideEl;
+        titleEl;
+        closeEl;
+        contEl;
+        overwritable;
+        change2FillEvt;
+        static hostType = 'none';
+        static optMaps = optViewer;
+        constructor(options = {}, initial = true) {
+            super();
+            super.ready({
+                options,
+                maps: Viewer.optMaps,
+                spread: ['total', 'tools', 'thumb']
+            });
+            let _this = this;
+            this.data = [];
+            this.shown = false;
+            this.overwritable = true;
+            this.targetEls = getEls(this.options.target);
+            this.hideEvt = () => {
+                if (this.options.mode === 'inline')
+                    return;
+                !this.viewerEl.hasAttribute('show') && this.viewerEl.remove();
+                if (this.targetEls.length) {
+                    for (let k of this.targetEls)
+                        k.classList.remove(this.options.actClass);
+                }
+            };
+            this.showEvt = debounce(function (evt) {
+                if (_this.options.mode === 'inline')
+                    return;
+                preventDft(evt);
+                !_this.shown && _this.show();
+                this.classList.add(_this.options.actClass);
+                _this.locateIdx = !isNull(this?.orca?.viewer) ? this?.orca?.viewer :
+                    _this.options.autoIdx ? _this.targetEls.findIndex((k) => k === this) : null;
+                !isNull(_this.locateIdx) && _this.stageIns.prepared && _this.stageIns.toLocate(_this.locateIdx);
+            });
+            this.change2FillEvt = debounce((params) => {
+                if (this.overwritable) {
+                    this.fillAside(null, params);
+                }
+                else {
+                    !this.contEl.innerHTML && this.fillAside(null, params);
+                }
+            }, this.options.aside.delay);
+            super.listen({ name: 'constructed' });
+            initial && this.init();
+        }
+        
+        async init(cb) {
+            super.listen({ name: 'initiate' });
+            try {
+                this.options.b4Init && await this.options.b4Init.call(this);
+            }
+            catch {
+                console.warn(config.warn.init);
+                return this;
+            }
+            if (orca.isPortraitScr) {
+                this.options.thumb.enable && (this.options.thumb.placement = 'bottom');
+                this.options.aside.enable && (this.options.aside.expanded = false);
+            }
+            this.data = await this.getStdData();
+            this.getStructure();
+            this.setThumbIns();
+            this.setStageIns();
+            this.setAttrs();
+            this.setTools();
+            if (this.targetEls.length && this.options.mode !== 'inline') {
+                for (let k of this.targetEls)
+                    k.addEventListener('click', this.showEvt, false);
+            }
+            if (this.options.aside.enable) {
+                this.options.aside.expanded ? this.expand() : this.collapse();
+            }
+            this.options.mode === 'inline' && this.targetEls[0] && this.show();
+            super.listen({ name: 'initiated', cb });
+        }
+        setTools() {
+            if (!this.options.tools.enable)
+                return;
+            createTools(this.options.tools.children, this.toolsEl, this);
+            for (let k of this.options.tools.children) {
+                if (k.name === 'close') {
+                    k.wrapEl.setAttribute('title', this.options.lang.close);
+                    k.wrapEl.onclick = () => {
+                        this.hide();
+                    };
+                }
+                else if (k.name === 'zoom') {
+                    k.wrapEl.setAttribute('title', this.options.lang.zoom);
+                    k.wrapEl.onclick = debounce(() => {
+                        this.stageIns.enable2Init(this.stageIns.snapSlider);
+                        this.stageIns.toggleZoom(this.stageIns.snapSlider);
+                    });
+                }
+                else if (k.name === 'zoomin') {
+                    k.wrapEl.setAttribute('title', this.options.lang.zoomin);
+                    k.wrapEl.onclick = debounce(() => {
+                        this.stageIns.enable2Init(this.stageIns.snapSlider);
+                        this.stageIns.snapSlider.zoomIns.stepFn(null, 1, 'keyboard');
+                    });
+                }
+                else if (k.name === 'zoomout') {
+                    k.wrapEl.setAttribute('title', this.options.lang.zoomout);
+                    k.wrapEl.onclick = debounce(() => {
+                        if (!this.stageIns?.snapSlider?.zoomIns)
+                            return;
+                        this.stageIns.snapSlider.zoomIns.stepFn(null, -1, 'keyboard');
+                        this.stageIns.snapSlider.zoomIns.nowVals.scale.x === this.stageIns.snapSlider.rawTrans.scale.x && this.stageIns.snapSlider.zoomIns.destroy();
+                    });
+                }
+                else if (k.name === 'play') {
+                    k.wrapEl.onclick = debounce(() => {
+                        if (this.stageIns.paused) {
+                            this.options.autoplay ? this.stageIns.autoPlay() : this.stageIns.play();
+                        }
+                        else {
+                            this.options.autoplay ? this.stageIns.autoPause() : this.stageIns.pause();
+                        }
+                    });
+                }
+                else if (k.name === 'flipv' || k.name === 'fliph') {
+                    k.wrapEl.setAttribute('title', this.options.lang[k.name]);
+                    k.wrapEl.onclick = debounce(() => {
+                        let mediaEl = this.stageIns.snapSlider.slider.querySelector(`.${orca.prefix}viewer-media`), scaleVal = transformTools.get(mediaEl, ['scale']).scale, setVal = {
+                            x: scaleVal.x * (k.name === 'fliph' ? -1 : 1),
+                            y: scaleVal.y * (k.name === 'flipv' ? -1 : 1)
+                        };
+                        transformTools.set({
+                            el: mediaEl,
+                            data: {
+                                scale: setVal,
+                            }
+                        });
+                    });
+                }
+                else if (k.name === 'download') {
+                    k.wrapEl.setAttribute('title', this.options.lang.download);
+                    k.wrapEl.onclick = debounce(() => {
+                        let sliderData = this.data.find((k) => k.wrapEl === this.stageIns.snapSlider.slider), href = sliderData?.source || sliderData?.media;
+                        if (!sliderData || !href || (sliderData.type && !['image', 'video', 'audio'].includes(sliderData.type)))
+                            return;
+                        let tmp = createEl('a', { download: '', style: 'display:none', target: '_blank', href });
+                        document.body.appendChild(tmp);
+                        tmp.click();
+                        setTimeout(() => tmp.remove(), 1000);
+                    });
+                }
+                else if (k.name === 'thumb') {
+                    k.wrapEl.setAttribute('title', this.options.lang.thumb);
+                    k.wrapEl.onclick = debounce(() => {
+                        let tmp = this.viewerEl.hasAttribute('nonthumb');
+                        this.viewerEl.toggleAttribute('nonthumb', !tmp);
+                    });
+                }
+                else if (k.name === 'fullscr') {
+                    k.wrapEl.setAttribute('title', this.options.lang.fullscrOn);
+                    k.wrapEl.onclick = debounce(() => {
+                        if (!document.fullscreenElement) {
+                            document.documentElement.requestFullscreen()
+                                .then(() => {
+                                this.toggleScreenAttr(k, 'off');
+                            });
+                        }
+                        else {
+                            document.exitFullscreen()
+                                .then(() => {
+                                this.toggleScreenAttr(k, 'on');
+                            });
+                        }
+                    });
+                }
+                else if (k.name === 'rotatel' || k.name === 'rotater') {
+                    k.wrapEl.setAttribute('title', this.options.lang[k.name]);
+                    k.wrapEl.onclick = debounce(() => {
+                        let tmp = this.stageIns.snapSlider.slider.querySelector(`.${orca.prefix}viewer-media`), rotateVal = transformTools.get(tmp, ['rotate']).rotate;
+                        transformTools.set({
+                            el: tmp,
+                            data: {
+                                rotate: rotateVal + 90 * (k.name === 'rotatel' ? -1 : 1),
+                            }
+                        });
+                    });
+                }
+                else if (k.name === 'more') {
+                    k.wrapEl.setAttribute('title', this.options.lang.expand);
+                    k.wrapEl.onclick = debounce(() => {
+                        if (!this.options.aside.enable)
+                            return;
+                        if (this.viewerEl.hasAttribute('expanded')) {
+                            this.collapse();
+                        }
+                        else {
+                            this.expand();
+                        }
+                    });
+                }
+            }
+        }
+        toggleMoreAttr(status) {
+            let tools = this.options.tools.children.find((k) => k.name === 'more');
+            if (!tools)
+                return;
+            let iconClass = classes(tools.iconEl);
+            if (status === 'off') {
+                tools.wrapEl.setAttribute('title', this.options.lang.collapse);
+                iconClass.replace(tools.icon, tools.swap);
+            }
+            else {
+                tools.wrapEl.setAttribute('title', this.options.lang.expand);
+                iconClass.replace(tools.swap, tools.icon);
+            }
+        }
+        toggleScreenAttr(tools, status) {
+            let iconClass = classes(tools.iconEl);
+            if (status === 'off') {
+                tools.wrapEl.setAttribute('title', this.options.lang.fullscrOff);
+                iconClass.replace(tools.icon, tools.swap);
+            }
+            else {
+                tools.wrapEl.setAttribute('title', this.options.lang.fullscrOn);
+                iconClass.replace(tools.swap, tools.icon);
+            }
+        }
+        togglePlayAttr(tools, status) {
+            let iconClass = classes(tools.iconEl);
+            if (status === 'play') {
+                tools.wrapEl.setAttribute('title', this.options.lang.play);
+                iconClass.replace(tools.swap, tools.icon);
+            }
+            else {
+                tools.wrapEl.setAttribute('title', this.options.lang.pause);
+                iconClass.replace(tools.icon, tools.swap);
+            }
+        }
+        getCurData(from = this.stageIns.actIdx, opts = {}) {
+            let index = opts.index, slider = opts.slider, thumb = opts.thumb;
+            if (isEmpty(opts)) {
+                let fromType = getDataType(from);
+                if (fromType === 'Number') {
+                    index = from;
+                }
+                else if (fromType === 'Object') {
+                    index = this.stageIns.sliders.findIndex((k) => k === from);
+                }
+                else if (fromType.includes('HTML')) {
+                    index = this.stageIns.sliders.findIndex((k) => k.slider === from);
+                }
+                if (index > -1) {
+                    slider = this.stageIns.sliders[index];
+                    thumb = this.thumbIns?.sliders[index];
+                }
+            }
+            return { index, slider, thumb, content: opts.content || this.data[index] };
+        }
+        async fillAside(from = this.stageIns.actIdx, opts = {}) {
+            if (!this.options.aside.enable || !this.options.aside.getter)
+                return;
+            let params = this.getCurData(from, opts), tmp = await this.options.aside.getter.call(this, params);
+            !isNull(tmp) && this.setAsideCont(tmp);
+        }
+        setAsideCont(content) {
+            if (!this.options.aside.enable)
+                return;
+            setContent({
+                content,
+                target: this.contEl,
+                template: this.options.aside.template,
+                engine: this.options.aside.engine,
+            });
+            super.listen({ name: 'filledAside', params: [content] });
+        }
+        setStageIns() {
+            this.stageIns = new Swipe(this.stageEl, deepMerge({
+                thumb: {
+                    content: this.thumbIns,
+                    mode: 'locate'
+                },
+                zoom: {
+                    enable: true,
+                },
+                nav: {
+                    fill: true,
+                },
+                total: {
+                    enable: true,
+                    selector: this.totalEl,
+                },
+                keyboard: true,
+                active: this.options.active,
+                autoplay: this.options.autoplay,
+                onChanged: (slider, index) => {
+                    let params = { index, slider, thumb: this.thumbIns?.sliders[index], content: this.data[index] };
+                    this.change2FillEvt(params);
+                    super.listen({ name: 'changed', params: [params] });
+                },
+                onPaused: () => {
+                    let playTools = this.options.tools.children.find((k) => k.name === 'play');
+                    playTools && this.togglePlayAttr(playTools, 'play');
+                },
+                onPlayed: () => {
+                    let playTools = this.options.tools.children.find((k) => k.name === 'play');
+                    playTools && this.togglePlayAttr(playTools, 'pause');
+                },
+                onPrepared: () => {
+                    if (!isNull(this.locateIdx)) {
+                        this.stageIns.scrollIns.tmpTarget = this.stageIns.sliders[this.locateIdx].slider;
+                    }
+                }
+            }, this.options.swipe));
+        }
+        setThumbIns() {
+            if (!this.options.thumb.enable)
+                return;
+            let opts = {
+                slides: 'auto',
+                nav: {
+                    enable: false,
+                },
+                flow: this.options.thumb.placement === 'bottom' ? 'h' : 'v',
+                scroll: {
+                    resizeThr: 2,
+                },
+            };
+            opts[this.options.thumb.placement === 'bottom' ? 'height' : 'width'] = this.options.thumb.size;
+            this.thumbIns = new Swipe(this.thumbEl, deepMerge(opts, this.options.thumb));
+        }
+        setAttrs() {
+            this.viewerEl.toggleAttribute('nonthumb', !this.options.thumb.show);
+            this.options.zIndex && (this.viewerEl.style.zIndex = this.options.zIndex);
+            this.options.thumb.enable && this.viewerEl.setAttribute('thumb', this.options.thumb.placement);
+            this.options.classes && classes(this.viewerEl).add(this.options.classes);
+            this.viewerEl.setAttribute('mode', this.options.mode);
+            this.viewerEl.toggleAttribute('inverted', this.options.inverted);
+            if (this.options.aside.enable) {
+                this.viewerEl.setAttribute('aside', this.options.aside.placement);
+            }
+            else {
+                this.viewerEl.removeAttribute('aside');
+            }
+        }
+        getStageSlideStr(data) {
+            if (data.type == 'video') {
+                return `<video controls lazy-src="${data.media}"></video>`;
+            }
+            else if (data.type == 'audio') {
+                return `<audio controls lazy-src="${data.media}"></audio>`;
+            }
+            else if (data.type == 'iframe') {
+                return `<iframe lazy-src="${data.media}" frameborder="0" width="100%" height="100%"></iframe>`;
+            }
+            else if (data.type == 'html') {
+                let tmp = getEl(data.media);
+                return `<div class="${orca.prefix}viewer-text" ${data.unfenced ? 'unfenced' : ''}>${tmp?.innerHTML || ''}</div>`;
+            }
+            else if (data.type == 'text') {
+                return `<div class="${orca.prefix}viewer-text" ${data.unfenced ? 'unfenced' : ''}>${data.media}</div>`;
+            }
+            else {
+                return `<img lazy-src="${data.media}"/>`;
+            }
+        }
+        fillStage() {
+            let ul = getEl('ul', this.stageEl), fragment = document.createDocumentFragment();
+            for (let k of this.data) {
+                k.mediaEl = createEl('div', { class: `${orca.prefix}viewer-media` });
+                k.captionEl = createEl('div', { class: `${orca.prefix}viewer-caption` }, k.caption);
+                k.wrapEl = createEl('li', {}, k.mediaEl);
+                if (k.type === 'dom') {
+                    let dom = getEl(k.media);
+                    let tmp = createEl('div', { class: `${orca.prefix}viewer-dom` }, dom);
+                    k.unfenced && tmp.toggleAttribute('unfenced', true);
+                    k.mediaEl.appendChild(tmp);
+                }
+                else {
+                    k.mediaEl.innerHTML = this.getStageSlideStr(k);
+                }
+                k.srcEl = k.mediaEl.firstElementChild;
+                k.caption && k.wrapEl.appendChild(k.captionEl);
+                if (k.attrs) {
+                    for (let i in k.attrs)
+                        k.srcEl.setAttribute(i, k.attrs[i]);
+                }
+                fragment.appendChild(k.wrapEl);
+            }
+            ul.appendChild(fragment);
+        }
+        fillThumb() {
+            if (!this.options.thumb.enable)
+                return;
+            let ul = getEl('ul', this.thumbEl), fragment = document.createDocumentFragment();
+            for (let k of this.data) {
+                let src = k.cover || (k.type === 'image' ? k.media : '') || orca.images.none;
+                k.coverEl = createEl('li', {}, `<img lazy-src="${src}"/>`);
+                fragment.appendChild(k.coverEl);
+            }
+            ul.appendChild(fragment);
+        }
+        getStructure() {
+            
+            let asideArrow = this.options.aside.placement === 'end' ? 'right' : 'left', asideCont = `<div class="${orca.prefix}viewer-aside">
+        ${this.options.aside.closable ? '<i ' + orca.alias + '="close" class="' + orca.prefix + 'icon-arrow-' + asideArrow + '" title="' + this.options.lang.collapse + '"></i>' : ''}
+        ${this.options.aside.title ? '<div class="' + orca.prefix + 'viewer-title"><span ' + orca.alias + '="title">' + this.options.aside.title + '</span></div>' : ''}
+        <div class="${orca.prefix}viewer-wrap">
+            <div class="${orca.prefix}viewer-cont"></div>
+        </div>
+      </div>
+      `;
+            this.viewerEl = createEl('div', { class: `${orca.prefix}viewer` }, `
+            <div class="${orca.prefix}viewer-mask"></div>
+            <div class="${orca.prefix}viewer-body">
+                <div class="${orca.prefix}viewer-head">
+                    <div class="${orca.prefix}viewer-total"></div>
+                    <div class="${orca.prefix}viewer-tools"></div>
+                </div>
+                <div class="${orca.prefix}viewer-stage"><ul class="${orca.prefix}reset"></ul></div>
+                <div class="${orca.prefix}viewer-foot">
+                    <div class="${orca.prefix}viewer-thumb"><ul class="${orca.prefix}reset"></ul></div>
+                </div>
+            </div>
+            ${this.options.aside.enable ? asideCont : ''}
+        `);
+            this.maskEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-mask`);
+            this.headEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-head`);
+            this.totalEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-total`);
+            this.toolsEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-tools`);
+            this.bodyEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-body`);
+            this.stageEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-stage`);
+            this.thumbEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-thumb`);
+            this.footEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-foot`);
+            this.asideEl = this.viewerEl.querySelector(`.${orca.prefix}viewer-aside`);
+            this.titleEl = this.asideEl?.querySelector(`[${orca.alias}="title]"`);
+            this.closeEl = this.asideEl?.querySelector(`:scope > [${orca.alias}="close"]`);
+            this.contEl = this.asideEl?.querySelector(`.${orca.prefix}viewer-cont`);
+            if (this.options.mode !== 'fixed') {
+                this.options.width && this.viewerEl.style.setProperty(`--${orca.prefix}viewer-w`, isNaN(this.options.width) ? this.options.width : this.options.width + 'px');
+                this.options.height && this.viewerEl.style.setProperty(`--${orca.prefix}viewer-h`, isNaN(this.options.height) ? this.options.height : this.options.height + 'px');
+            }
+            this.fillStage();
+            this.fillThumb();
+            this.viewerEl.addEventListener('transitionend', this.hideEvt, false);
+            this.stageEl.onclick = (event) => {
+                let target = getEvtTarget(event);
+                if ([this.maskEl, this.stageEl].includes(target)) {
+                    this.hide();
+                }
+            };
+            if (this.closeEl) {
+                this.closeEl.onclick = () => {
+                    this.collapse();
+                };
+            }
+            init('lazy', this.viewerEl);
+        }
+        getDataFromFigure(target) {
+            
+            let result = [];
+            if (getEl('figure', target)) {
+                result = getEls('figure', target);
+                return result.map((k) => {
+                    let img = getEl('img', k), src = img?.getAttribute('src') || '', caption = k.querySelector('figcaption')?.innerHTML || img?.getAttribute('alt') || img?.getAttribute('title') || '';
+                    return { media: src, cover: src, caption, type: 'image', };
+                });
+            }
+            else {
+                result = getEls('img', target);
+                return result.map((k) => {
+                    let src = k.getAttribute('src') || '', caption = k.getAttribute('alt') || k.getAttribute('title') || '';
+                    return { media: src, cover: src, caption, type: 'image' };
+                });
+            }
+        }
+        getDataFromStr(str) {
+            str = str.trim();
+            let tmp = getEl(str);
+            return tmp ? this.getDataFromFigure(tmp) : valToArr(str).map((k) => { return { media: k, cover: k, type: 'image' }; });
+        }
+        async getStdData(content = this.options.content) {
+            if (this.options.contType === 'async') {
+                await getContent.call(this, {
+                    content,
+                    contType: this.options.contType,
+                    contData: this.options.contData,
+                    ajax: {
+                        xhrName: 'contXhr',
+                        spinSel: this.targetEl,
+                        ...this.options.ajax
+                    },
+                    cb: async (data) => {
+                        content = data;
+                    }
+                });
+            }
+            let getDataFromSingle = (cont) => {
+                let contType = getDataType(cont);
+                if (contType === 'String') {
+                    return this.getDataFromStr(cont);
+                }
+                else if (contType.includes('HTML')) {
+                    return this.getDataFromFigure(cont);
+                }
+                else if (contType === 'Object') {
+                    return [cont];
+                }
+                else if (contType === 'Array') {
+                    return cont.map((k) => getDataFromSingle(k)).flat();
+                }
+            }, data = getDataFromSingle(content);
+            return data.filter((k) => k.media);
+        }
+        show(cb) {
+            if (this.destroyed)
+                return this;
+            super.listen({ name: 'show' });
+            (this.options.mode === 'inline' && this.targetEls[0] ? this.targetEls[0] : document.body).appendChild(this.viewerEl);
+            this.viewerEl.setAttribute('show', '');
+            this.shown = true;
+            super.listen({ name: 'shown', cb });
+            return this;
+        }
+        hide(cb) {
+            if (this.destroyed || this.options.mode === 'inline')
+                return this;
+            super.listen({ name: 'hide' });
+            this.viewerEl.removeAttribute('show');
+            this.viewerEl.addEventListener('transitionend', this.hideEvt, false);
+            for (let k of getEls('video,audio', this.stageEl))
+                k.pause();
+            this.shown = false;
+            super.listen({ name: 'hiddden', cb });
+            return this;
+        }
+        expand(cb) {
+            if (this.destroyed)
+                return this;
+            this.viewerEl.toggleAttribute('expanded', true);
+            this.toggleMoreAttr('off');
+            super.listen({ name: 'expanded', cb });
+            return this;
+        }
+        collapse(cb) {
+            if (this.destroyed)
+                return this;
+            this.viewerEl.toggleAttribute('expanded', false);
+            this.toggleMoreAttr('on');
+            super.listen({ name: 'expanded', cb });
+            return this;
+        }
+        
+        destroy(cb) {
+            if (this.destroyed)
+                return this;
+            this.viewerEl.removeEventListener('transitionend', this.hideEvt);
+            if (this.targetEls.length && this.options.mode !== 'inline') {
+                for (let k of this.targetEls)
+                    k.removeEventListener('click', this.showEvt);
+            }
+            if (this.options.tools.enable) {
+                for (let k of this.options.tools.children)
+                    k.wrapEl.onclick = null;
+            }
+            if (this.closeEl) {
+                this.closeEl.onclick = null;
+            }
+            this.stageEl.onclick = null;
+            this.destroyed = true;
+            super.listen({ name: 'destroyed', cb });
+            return this;
+        }
+    }
+
     class CompBaseCommField extends CompBaseComm {
         name;
         value;
@@ -38519,88 +39716,6 @@
         }
     }
 
-    const init = (type, parent) => {
-        let parentEl = getEl(parent) || document.body, evalFn = new Function('el', 'module', `"use strict";try {return new module(el)} catch {return null}`), moduleNodeMaps = [], setProp = (node, module) => {
-            storeNode(node)?.addModule(module);
-        }, getUsableModules = () => {
-            let result = [];
-            for (let [key, value] of Object.entries(orca)) {
-                value?.hostType === 'node' ? result.push(key) : null;
-            }
-            return result;
-        }, getNodeList = (types) => {
-            let allModules = getUsableModules(), modules = !isEmpty(types) ? types.filter(k => allModules.includes(k)) : allModules, modulesNodes = modules.map(k => {
-                let nodes = getEls(`[oc-${k}]`, parentEl).filter((i) => !i.orca || (i.orca && !i.orca[k]));
-                return nodes.map((i) => { return { module: k, node: i }; });
-            });
-            return modulesNodes;
-        }, activeFn = (obj) => {
-            if (['Dialog', 'Drawer', 'Popup'].includes(obj.module)) {
-                higherParent(obj.module, obj.node);
-            }
-            else {
-                let ins = evalFn(obj.node, orca[obj.module]);
-                ins ? setProp(obj.node, obj.module) : null;
-            }
-        }, higherParent = (module, node) => {
-            let eachInstance = (host, parent) => {
-                let ins = evalFn(host, orca[module]), children;
-                if (ins) {
-                    host[module] = true;
-                    parent ? ins.targetEl.style.zIndex = parseInt(getComputedStyle(parent.targetEl).zIndex) + 1 : null;
-                    children = getEls(`[oc-${module}]`, ins.contEl);
-                    if (children.length > 0) {
-                        for (let k of children)
-                            eachInstance(k, ins);
-                    }
-                }
-            };
-            eachInstance(node);
-        };
-        if (!isEmpty(type)) {
-            let moduleType = getDataType(type), types;
-            types = (moduleType === 'String') ? [type] :
-                (moduleType === 'Array') ? type : [];
-            moduleNodeMaps = types.length > 0 ? getNodeList(types) : [];
-        }
-        else {
-            moduleNodeMaps = getNodeList();
-        }
-        let flatArr = moduleNodeMaps.flat();
-        if (flatArr.length) {
-            decompTask({
-                tasks: flatArr,
-                count: 4,
-                type: 'idle',
-                done: () => {
-                    console.info(`Initialization finished, all tasks of orcaui are done!`);
-                },
-                run: (task) => activeFn(task),
-            });
-        }
-        let lazySrcs = getEls('[lazy-src]', parentEl), lazyAsyncs = getEls('[lazy-async]', parentEl);
-        for (let k of lazySrcs) {
-            if (k?.orca?.lazy)
-                continue;
-            new Lazy(k, {
-                content: k.getAttribute('lazy-src'),
-                type: 'src'
-            });
-        }
-        for (let k of lazyAsyncs) {
-            if (k?.orca?.lazy)
-                continue;
-            new Lazy(k, {
-                content: k.getAttribute('lazy-async'),
-                contType: k.getAttribute('lazy-type'),
-                contData: strToJson(k.getAttribute('lazy-data')),
-                tplStr: k.getAttribute('lazy-tpl'),
-                type: 'async'
-            });
-        }
-        return orca;
-    };
-
     var modules = {
         orca,
         config,
@@ -38763,6 +39878,7 @@
         promiseRaf,
         getRtl,
         setRtl,
+        isChildVisible,
         ModBase,
         ModBaseListen,
         ModBaseListenCache,
@@ -38807,6 +39923,7 @@
         Panel,
         Router,
         Flip,
+        Viewer,
         CompBase,
         CompBaseComm,
         CompBaseCommField,
@@ -38976,6 +40093,7 @@
         Upload: Upload,
         UploadElem: UploadElem,
         Valid: Valid,
+        Viewer: Viewer,
         Virtualize: Virtualize,
         WallElem: WallElem,
         addStyle: addStyle,
@@ -39072,6 +40190,7 @@
         increaseId: increaseId,
         init: init,
         instance: instance,
+        isChildVisible: isChildVisible,
         isDateStr: isDateStr,
         isEmpty: isEmpty,
         isNull: isNull,
